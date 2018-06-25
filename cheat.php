@@ -1,5 +1,5 @@
 <?php
-//96c49ff0
+//96c49ff
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
