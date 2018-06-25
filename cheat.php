@@ -1,5 +1,5 @@
 <?php
-//9fae4210
+//9fae421
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -62,7 +62,7 @@ if( strlen( $Token ) !== 32 )
 	exit( 1 );
 }
 
-$LocalScriptHash = $RepositoryScriptHash = GetRepositoryScriptHash( );
+$LocalScriptHash = $RepositoryScriptHash = GetRepositoryScriptHash();
 
 $WaitTime = 110;
 $KnownPlanets = [];
@@ -191,10 +191,10 @@ do
 
 	if( $LocalScriptHash !== $RepositoryScriptHash )
 	{
-		$setTitle3 = " New";
+		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
+		$setTitle3 = " =NewUpdate=";
 		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
-		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
 	}
 
 	Msg( '   {grey}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 3 ) . ' seconds before rescanning planets...' );
@@ -761,7 +761,7 @@ function ExecuteRequest( $Method, $URL, $Data = [] )
 	return $Data;
 }
 
-function GetRepositoryScriptHash( )
+function GetRepositoryScriptHash()
 {
 	$c_r = curl_init( );
 
@@ -793,6 +793,9 @@ function GetRepositoryScriptHash( )
 	}
 
 	Msg( '{lightred}-- Failed to check for script in repository' );
+	$setTitle3 = " Failed";
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+	cli_set_process_title($setTitlex);
 }
 
 function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
