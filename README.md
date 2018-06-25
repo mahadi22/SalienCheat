@@ -11,10 +11,22 @@
 📣 [Check this reddit thread for a complete guide and troubleshooting](https://redd.it/8t5w8v)
 
 ### Windows
-
+### Installing
 1. [Download this script](https://github.com/SteamDatabase/SalienCheat/archive/master.zip)
 2. Extract it into a new folder
 3. Click `cheat.bat` and follow instructions
+
+### How to run
+1. open simplerun.bat
+2. input your token string (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) or your token file name complete with extension (token0.txt)
+
+
+Another way to run, good for multiple account              
+```
+- php cheat.php yourtokenstring             
+- php cheat.php tokenfile.txt                  
+- php cheat.php   (you can input your tokenfile or token string inside)
+```
 
 ![OnAction](https://i.imgur.com/6C9bwVC.png)
 
@@ -34,6 +46,11 @@ php cheat.php token2
 
 1. Install `php-curl` and enable it in `php.ini`
 2. You know what you are doing. 🐧
+
+
+
+
+
 
 ## Python
 
