@@ -1,5 +1,5 @@
 <?php
-//5437e83
+//a8b8f65  
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -34,7 +34,6 @@ else if( is_string( $EnvToken ) )
 else
 {
 	// otherwise, read it from disk
-	//$Token = trim( file_get_contents( __DIR__ . '/token.txt' ) );
 	msg ("Enter your token files (ex; token0.txt): ");
 	$fileLoc = fgets(STDIN);
 	$setTitle0 = "SALIEN-" . $fileLoc;
@@ -68,6 +67,8 @@ $KnownPlanets = [];
 $SkippedPlanets = [];
 $ZonePaces = [];
 
+Msg( "\033[37;44mWelcome to SalienCheat for Everyone\033[0m" );
+
 do
 {
 	$Data = SendPOST( 'ITerritoryControlMinigameService/GetPlayerInfo', 'access_token=' . $Token );
@@ -81,14 +82,14 @@ do
 	
 			SendPOST( 'ITerritoryControlMinigameService/RepresentClan', 'clanid=4066397&access_token=' . $Token );
 		}
-		else if( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] != 4066397 )
-		{
-			Msg( '{green}-- If you want to support us, join our group' );
-			Msg( '{green}--{yellow} xxxxxx' );
-			Msg( '{green}-- and set us as your clan on' );
-			Msg( '{green}--{yellow} https://steamcommunity.com/saliengame/play' );
-			Msg( '{green}-- Happy farming!' );
-		}
+		//else if( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] != 4066397 )
+		//{
+			//Msg( '{green}-- If you want to support us, join our group' );
+			//Msg( '{green}--{yellow} xxxxxx' );
+			//Msg( '{green}-- and set us as your clan on' );
+			//Msg( '{green}--{yellow} https://steamcommunity.com/saliengame/play' );
+			//Msg( '{green}-- Happy farming!' );
+		//}
 	}
 }
 while( !isset( $Data[ 'response' ][ 'score' ] ) );
@@ -157,8 +158,7 @@ do
 			}, $Zone[ 'top_clans' ] ) )
 		);
 	}
-	
-	$SkippedLagTime = curl_getinfo( $c, CURLINFO_TOTAL_TIME ) - curl_getinfo( $c, CURLINFO_STARTTRANSFER_TIME ) + 0.2;
+	$SkippedLagTime = floor( curl_getinfo( $c, CURLINFO_TOTAL_TIME ) - curl_getinfo( $c, CURLINFO_STARTTRANSFER_TIME ) );
 	$LagAdjustedWaitTime = $WaitTime - $SkippedLagTime;
 	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
 	$PlanetCheckTime = microtime( true );
@@ -343,7 +343,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 			$TimeDelta = array_sum( $DifferenceTimes ) / count( $DifferenceTimes );
 			$PaceCutoff = ( array_sum( $Differences ) / count( $Differences ) ) * $TimeDelta;
-			$Cutoff = 1.0 - min( 0.1, $PaceCutoff );
+			$Cutoff = 1.0 - max( 0.1, $PaceCutoff );
 
 			if( $PaceCutoff > 0.02 )
 			{
@@ -391,6 +391,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 	unset( $Zone );
 
 	$ShouldTruncate = count( $ZonePaces[ $Planet ][ 'times' ] ) > 3;
+
 	foreach( $Zones as $Zone )
 	{
 		if( !isset( $ZonePaces[ $Planet ][ $Zone[ 'zone_position' ] ] ) )
