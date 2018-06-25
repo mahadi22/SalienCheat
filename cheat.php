@@ -1,5 +1,5 @@
 <?php
-//71f18e5 
+//9fae421
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -9,20 +9,20 @@ if( !file_exists( __DIR__ . '/cacert.pem' ) )
 }
 
 $EnvToken = getenv('TOKEN');
-$setTitle1 = $setTitle2  = "0";
+$setTitle1 = $setTitle2  = $setTitle3  = "0";
 if( $argc === 2 )
 {
 	$fileLoc = $argv[ 1 ];
 	if(strpos($fileLoc, '.txt') !== false) {
 		$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 		$setTitle0 = "SALIEN-" . $fileLoc;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
 		cli_set_process_title($setTitlex);
 	}
 	else {
 		$Token = $argv[ 1 ];
 		$setTitle0 = "SALIEN-" . $Token;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
 		cli_set_process_title($setTitlex);
 	}
 }
@@ -37,7 +37,7 @@ else
 	msg ("Enter your token files (ex; token0.txt): ");
 	$fileLoc = fgets(STDIN);
 	$setTitle0 = "SALIEN-" . $fileLoc;
-	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
 	cli_set_process_title($setTitlex);
 	$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 	$ParsedToken = json_decode( $Token, true );
@@ -62,6 +62,8 @@ if( strlen( $Token ) !== 32 )
 	exit( 1 );
 }
 
+$LocalScriptHash = $RepositoryScriptHash = GetRepositoryScriptHash( );
+
 $WaitTime = 110;
 $KnownPlanets = [];
 $SkippedPlanets = [];
@@ -75,13 +77,13 @@ do
 
 	if( isset( $Data[ 'response' ][ 'score' ] ) )
 	{
-		if( !isset( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] ) )
-		{
-			Msg( '{green}-- You are currently not representing any clan, so you are now part of xxxx' );
-			Msg( '{green}-- Make sure to join{yellow} xxxx {green}on Steam' );
+		//if( !isset( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] ) )
+		//{
+			//Msg( '{green}-- You are currently not representing any clan, so you are now part of xxxx' );
+			//Msg( '{green}-- Make sure to join{yellow} xxxx {green}on Steam' );
 	
-			SendPOST( 'ITerritoryControlMinigameService/RepresentClan', 'clanid=4066397&access_token=' . $Token );
-		}
+			//SendPOST( 'ITerritoryControlMinigameService/RepresentClan', 'clanid=4066397&access_token=' . $Token );
+		//}
 		//else if( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] != 4066397 )
 		//{
 			//Msg( '{green}-- If you want to support us, join our group' );
@@ -165,7 +167,7 @@ do
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Zone )
 	);
 	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
-	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
 	cli_set_process_title($setTitlex);
 	if( isset( $Zone[ 'top_clans' ] ) )
 	{
@@ -181,6 +183,19 @@ do
 	$LagAdjustedWaitTime = $WaitTime - $SkippedLagTime;
 	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
 	$PlanetCheckTime = microtime( true );
+
+	if( $LocalScriptHash === $RepositoryScriptHash )
+	{
+		$RepositoryScriptHash = GetRepositoryScriptHash( );
+	}
+
+	if( $LocalScriptHash !== $RepositoryScriptHash )
+	{
+		$setTitle3 = " New";
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+		cli_set_process_title($setTitlex);
+		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
+	}
 
 	Msg( '   {grey}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 3 ) . ' seconds before rescanning planets...' );
 
@@ -231,7 +246,7 @@ do
 		);
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
 		cli_set_process_title($setTitlex);
 		
 		$Time = ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * ( $WaitTime / 60 );
@@ -744,6 +759,40 @@ function ExecuteRequest( $Method, $URL, $Data = [] )
 	while( !isset( $Data[ 'response' ] ) && sleep( 1 ) === 0 );
 
 	return $Data;
+}
+
+function GetRepositoryScriptHash( )
+{
+	$c_r = curl_init( );
+
+	curl_setopt_array( $c_r, [
+		CURLOPT_URL            => 'https://api.github.com/repos/mahadi22/SalienCheat/git/trees/master',
+		CURLOPT_USERAGENT      => 'SalienCheat (https://github.com/mahadi22/SalienCheat/)',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING       => 'gzip',
+		CURLOPT_TIMEOUT        => 5,
+		CURLOPT_CONNECTTIMEOUT => 5,
+		CURLOPT_CAINFO         => __DIR__ . '/cacert.pem',
+	] );
+
+	$Data = curl_exec( $c_r );
+
+	curl_close( $c_r );
+
+	$Data = json_decode( $Data, true );
+
+	if ( isset( $Data[ 'tree' ] ) )
+	{
+		foreach( $Data[ 'tree' ] as &$File )
+		{
+			if ( $File[ 'path' ] === "cheat.php" )
+			{
+				return $File[ 'sha' ];
+			}
+		}
+	}
+
+	Msg( '{lightred}-- Failed to check for script in repository' );
 }
 
 function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
