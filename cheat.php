@@ -9,7 +9,7 @@ if( !file_exists( __DIR__ . '/cacert.pem' ) )
 }
 
 $EnvToken = getenv('TOKEN');
-$setTitle1 = $setTitle2  = $setTitle3  = "0";
+$setTitle1 = $setTitle2  = $setTitle3  = "";
 if( $argc === 2 )
 {
 	$fileLoc = $argv[ 1 ];
