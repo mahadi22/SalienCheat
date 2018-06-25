@@ -1,5 +1,5 @@
 <?php
-//9fae4210
+//96c49ff
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -722,9 +722,9 @@ function ExecuteRequest( $Method, $URL, $Data = [] )
 		{
 			Msg( '{lightred}!! ' . $Method . ' failed - EResult: ' . $EResult . ' - ' . $Data );
 
-			if( preg_match( '/[Xx]-error_message: /', $Header, $ErrorMessage ) === 1 )
+			if( preg_match( '/^[Xx]-error_message: (?:.+)$/m', $Header, $ErrorMessage ) === 1 )
 			{
-				Msg( '{lightred}!! ' . $Header );
+				Msg( '{lightred}!! API failed - ' . $ErrorMessage[ 0 ] );
 			}
 
 			if( $EResult === 15 && $Method === 'ITerritoryControlMinigameService/RepresentClan' )
@@ -766,7 +766,7 @@ function GetRepositoryScriptHash()
 	$c_r = curl_init( );
 
 	curl_setopt_array( $c_r, [
-		CURLOPT_URL            => 'https://api.github.com/repos/mahadi22/SalienCheat/git/trees/master',
+		CURLOPT_URL            => 'https://raw.githubusercontent.com/mahadi22/SalienCheat/master/cheat.php?_=' . time(),
 		CURLOPT_USERAGENT      => 'SalienCheat (https://github.com/mahadi22/SalienCheat/)',
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING       => 'gzip',
@@ -779,23 +779,13 @@ function GetRepositoryScriptHash()
 
 	curl_close( $c_r );
 
-	$Data = json_decode( $Data, true );
-
-	if ( isset( $Data[ 'tree' ] ) )
+	if( strlen( $Data ) > 0 )
 	{
-		foreach( $Data[ 'tree' ] as &$File )
-		{
-			if ( $File[ 'path' ] === "cheat.php" )
-			{
-				return $File[ 'sha' ];
-			}
-		}
+		return sha1( $Data );
 	}
 
-	Msg( '{lightred}-- Failed to check for script in repository' );
-	$setTitle3 = " Failed";
-	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
-	cli_set_process_title($setTitlex);
+	global $LocalScriptHash;
+	return $LocalScriptHash;
 }
 
 function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
