@@ -184,18 +184,18 @@ do
 	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
 	$PlanetCheckTime = microtime( true );
 
-	if( $LocalScriptHash === $RepositoryScriptHash )
-	{
-		$RepositoryScriptHash = GetRepositoryScriptHash( );
-	}
+	//if( $LocalScriptHash === $RepositoryScriptHash )
+	//{
+		//$RepositoryScriptHash = GetRepositoryScriptHash();
+	//}
 
-	if( $LocalScriptHash !== $RepositoryScriptHash )
-	{
-		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
-		$setTitle3 = " =NewUpdate=";
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
-		cli_set_process_title($setTitlex);
-	}
+	//if( $LocalScriptHash !== $RepositoryScriptHash )
+	//{
+		//Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
+		//$setTitle3 = " =NewUpdate=";
+		//$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+		//cli_set_process_title($setTitlex);
+	//}
 
 	Msg( '   {grey}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 3 ) . ' seconds before rescanning planets...' );
 
