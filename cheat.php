@@ -16,13 +16,13 @@ if( $argc === 2 )
 	if(strpos($fileLoc, '.txt') !== false) {
 		$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 		$setTitle0 = "SALIEN-" . $fileLoc;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
 	}
 	else {
 		$Token = $argv[ 1 ];
 		$setTitle0 = "SALIEN-" . $Token;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
 	}
 }
@@ -37,7 +37,7 @@ else
 	msg ("Enter your token files (ex; token0.txt): ");
 	$fileLoc = fgets(STDIN);
 	$setTitle0 = "SALIEN-" . $fileLoc;
-	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
 	$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 	$ParsedToken = json_decode( $Token, true );
@@ -167,7 +167,7 @@ do
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Zone )
 	);
 	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
-	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
 	if( isset( $Zone[ 'top_clans' ] ) )
 	{
@@ -192,7 +192,7 @@ do
 	if( $LocalScriptHash !== $RepositoryScriptHash )
 	{
 		$setTitle3 = " New";
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
 		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
 	}
@@ -246,7 +246,7 @@ do
 		);
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 $setTitle3;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
 		
 		$Time = ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * ( $WaitTime / 60 );
