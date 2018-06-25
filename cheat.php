@@ -1,5 +1,5 @@
 <?php
-
+//5437e83
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -9,10 +9,22 @@ if( !file_exists( __DIR__ . '/cacert.pem' ) )
 }
 
 $EnvToken = getenv('TOKEN');
-
+$setTitle1 = $setTitle2  = "0";
 if( $argc === 2 )
 {
-	$Token = $argv[ 1 ];
+	$fileLoc = $argv[ 1 ];
+	if(strpos($fileLoc, '.txt') !== false) {
+		$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
+		$setTitle0 = "SALIEN-" . $fileLoc;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+		cli_set_process_title($setTitlex);
+	}
+	else {
+		$Token = $argv[ 1 ];
+		$setTitle0 = "SALIEN-" . $Token;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+		cli_set_process_title($setTitlex);
+	}
 }
 else if( is_string( $EnvToken ) )
 {
@@ -22,7 +34,13 @@ else if( is_string( $EnvToken ) )
 else
 {
 	// otherwise, read it from disk
-	$Token = trim( file_get_contents( __DIR__ . '/token.txt' ) );
+	//$Token = trim( file_get_contents( __DIR__ . '/token.txt' ) );
+	msg ("Enter your token files (ex; token0.txt): ");
+	$fileLoc = fgets(STDIN);
+	$setTitle0 = "SALIEN-" . $fileLoc;
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+	cli_set_process_title($setTitlex);
+	$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 	$ParsedToken = json_decode( $Token, true );
 	
 	if( is_string( $ParsedToken ) )
@@ -41,7 +59,7 @@ unset( $EnvToken );
 
 if( strlen( $Token ) !== 32 )
 {
-	Msg( 'Failed to find your token. Verify token.txt' );
+	Msg( '{lightred} Failed to find your token. Verify your token correct/token file exist.' );
 	exit( 1 );
 }
 
@@ -49,8 +67,6 @@ $WaitTime = 110;
 $KnownPlanets = [];
 $SkippedPlanets = [];
 $ZonePaces = [];
-
-Msg( "\033[37;44mWelcome to SalienCheat for SteamDB\033[0m" );
 
 do
 {
@@ -60,15 +76,15 @@ do
 	{
 		if( !isset( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] ) )
 		{
-			Msg( '{green}-- You are currently not representing any clan, so you are now part of SteamDB' );
-			Msg( '{green}-- Make sure to join{yellow} https://steamcommunity.com/groups/steamdb {green}on Steam' );
+			Msg( '{green}-- You are currently not representing any clan, so you are now part of xxxx' );
+			Msg( '{green}-- Make sure to join{yellow} xxxx {green}on Steam' );
 	
-			SendPOST( 'ITerritoryControlMinigameService/RepresentClan', 'clanid=4777282&access_token=' . $Token );
+			SendPOST( 'ITerritoryControlMinigameService/RepresentClan', 'clanid=4066397&access_token=' . $Token );
 		}
-		else if( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] != 4777282 )
+		else if( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] != 4066397 )
 		{
 			Msg( '{green}-- If you want to support us, join our group' );
-			Msg( '{green}--{yellow} https://steamcommunity.com/groups/steamdb' );
+			Msg( '{green}--{yellow} xxxxxx' );
 			Msg( '{green}-- and set us as your clan on' );
 			Msg( '{green}--{yellow} https://steamcommunity.com/saliengame/play' );
 			Msg( '{green}-- Happy farming!' );
@@ -129,7 +145,19 @@ do
 		'{normal} - Captured: {yellow}' . number_format( $Zone[ 'capture_progress' ] * 100, 2 ) . '%' .
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Zone )
 	);
-
+	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+	cli_set_process_title($setTitlex);
+	if( isset( $Zone[ 'top_clans' ] ) )
+	{
+		Msg(
+			'-- Top clans: ' . implode(', ', array_map( function( $Clan )
+			{
+				return $Clan[ 'url' ];
+			}, $Zone[ 'top_clans' ] ) )
+		);
+	}
+	
 	$SkippedLagTime = curl_getinfo( $c, CURLINFO_TOTAL_TIME ) - curl_getinfo( $c, CURLINFO_STARTTRANSFER_TIME ) + 0.2;
 	$LagAdjustedWaitTime = $WaitTime - $SkippedLagTime;
 	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
@@ -182,6 +210,10 @@ do
 			'{normal} - Current Level: {green}' . $Data[ 'new_level' ] .
 			'{normal} (' . number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%)'
 		);
+		$expT = number_format( $Data[ 'new_score' ] / $Data[ 'next_level_score' ] * 100, 2 ) . '%';
+		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
+		cli_set_process_title($setTitlex);
 		
 		$Time = ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * ( $WaitTime / 60 );
 		$Hours = floor( $Time / 60 );
@@ -359,7 +391,6 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 	unset( $Zone );
 
 	$ShouldTruncate = count( $ZonePaces[ $Planet ][ 'times' ] ) > 3;
-
 	foreach( $Zones as $Zone )
 	{
 		if( !isset( $ZonePaces[ $Planet ][ $Zone[ 'zone_position' ] ] ) )
@@ -589,7 +620,7 @@ function GetCurl( )
 	$c = curl_init( );
 
 	curl_setopt_array( $c, [
-		CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3464.0 Safari/537.36',
+		CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING       => 'gzip',
 		CURLOPT_TIMEOUT        => 30,
@@ -658,9 +689,9 @@ function ExecuteRequest( $Method, $URL, $Data = [] )
 			{
 				echo PHP_EOL;
 
-				Msg( '{green}This script was designed for SteamDB' );
+				Msg( '{green}This script was designed for xxxxxx' );
 				Msg( '{green}If you want to support it, join the group and represent it in game:' );
-				Msg( '{yellow}https://steamcommunity.com/groups/SteamDB' );
+				Msg( '{yellow}xxxxxxxxxx' );
 
 				sleep( 10 );
 			}
