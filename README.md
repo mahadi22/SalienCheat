@@ -16,6 +16,8 @@
 2. Extract it into a new folder
 3. Click `cheat.bat` and follow instructions
 
+![OnAction](https://i.imgur.com/6C9bwVC.png)
+
 ### Mac
 
 0. (optional) Launch the App Store and download any updates for macOS. Newer versions of macOS have php and curl included by default
