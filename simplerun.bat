@@ -1,7 +1,7 @@
 @ECHO OFF
 :start
 echo:
-SET /P token=Please input your token file with extension (ex: token0.txt) 
+SET /P token=Please input your token file with extension or your token string \n(ex: token0.txt or yourtokenstring) 
 @title SALIEN - %token%
 if not defined token goto error
 goto runit
