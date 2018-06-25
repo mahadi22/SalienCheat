@@ -1,5 +1,5 @@
 <?php
-//d52c5fb 
+//71f18e5 
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -121,8 +121,8 @@ do
 	$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinZone', 'zone_position=' . $BestPlanetAndZone[ 'best_zone' ][ 'zone_position' ] . '&access_token=' . $Token );
 	$WaitedTimeAfterJoinZone = microtime( true );
 
-	// If join fails, or we join after cutoff, then rescan it again
-	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) || $Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] >= $BestPlanetAndZone[ 'best_zone' ][ 'cutoff' ] )
+	// Rescan planets if joining failed
+	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) )
 	{
 		Msg( '{lightred}!! Failed to join a zone, rescanning and restarting...' );
 
@@ -138,6 +138,25 @@ do
 	}
 
 	$Zone = $Zone[ 'response' ][ 'zone_info' ];
+
+	if( empty( $Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] ) )
+	{
+		$Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] = 0.0;
+	}
+
+	// Rescan planets if we join zone that will finish before we do
+	if( $Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] >= $BestPlanetAndZone[ 'best_zone' ][ 'cutoff' ] )
+	{
+		Msg( '{lightred}!! This zone will finish before us, rescanning and restarting...' );
+
+		do
+		{
+			$BestPlanetAndZone = GetBestPlanetAndZone( $SkippedPlanets, $KnownPlanets, $ZonePaces, $WaitTime );
+		}
+		while( !$BestPlanetAndZone && sleep( 5 ) === 0 );
+
+		continue;
+	}
 
 	Msg(
 		'>> Joined Zone {yellow}' . $Zone[ 'zone_position' ] .
@@ -210,7 +229,7 @@ do
 			'{normal} - Current Level: {green}' . $Data[ 'new_level' ] .
 			'{normal} (' . number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%)'
 		);
-		$expT = number_format( $Data[ 'new_score' ] / $Data[ 'next_level_score' ] * 100, 2 ) . '%';
+		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT;
 		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2;
 		cli_set_process_title($setTitlex);
@@ -359,12 +378,12 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 				$ZoneMessages[] =
 				[
-					'     Zone {yellow}%3d{normal} - Captured: {yellow}%5s%%{normal} - Cutoff: {yellow}%5s%%{normal} - Pace: {yellow}+%s%%{normal} - ETA: {yellow}%2dm %2ds{normal}',
+					'     Zone {yellow}%3d{normal} - Captured: {yellow}%5s%%{normal} - Cutoff: {yellow}%5s%%{normal} - Pace: {yellow}%6s%%{normal} - ETA: {yellow}%2dm %2ds{normal}',
 					[
 						$Zone[ 'zone_position' ],
 						number_format( $Zone[ 'capture_progress' ] * 100, 2 ),
 						number_format( $Cutoff * 100, 2 ),
-						number_format( $PaceCutoff * 100, 2 ),
+						'+' . number_format( $PaceCutoff * 100, 2 ),
 						$Minutes,
 						$Seconds,
 					]
@@ -397,7 +416,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 	unset( $Zone );
 
-	$ShouldTruncate = count( $ZonePaces[ $Planet ][ 'times' ] ) > 3;
+	$ShouldTruncate = count( $ZonePaces[ $Planet ][ 'times' ] ) > 1;
 
 	foreach( $Zones as $Zone )
 	{
