@@ -1,5 +1,5 @@
 <?php
-//a8b8f65  
+//d52c5fb 
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -104,8 +104,6 @@ do
 {
 	echo PHP_EOL;
 
-	$Zone = $BestPlanetAndZone[ 'best_zone' ];
-
 	do
 	{
 		// Leave current game before trying to switch planets (it will report InvalidState otherwise)
@@ -120,10 +118,11 @@ do
 	}
 	while( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet );
 
-	$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinZone', 'zone_position=' . $Zone[ 'zone_position' ] . '&access_token=' . $Token );
+	$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinZone', 'zone_position=' . $BestPlanetAndZone[ 'best_zone' ][ 'zone_position' ] . '&access_token=' . $Token );
 	$WaitedTimeAfterJoinZone = microtime( true );
 
-	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) )
+	// If join fails, or we join after cutoff, then rescan it again
+	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) || $Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] >= $BestPlanetAndZone[ 'best_zone' ][ 'cutoff' ] )
 	{
 		Msg( '{lightred}!! Failed to join a zone, rescanning and restarting...' );
 
@@ -141,7 +140,7 @@ do
 	$Zone = $Zone[ 'response' ][ 'zone_info' ];
 
 	Msg(
-		'>> Joined Zone {green}' . $Zone[ 'zone_position' ] .
+		'>> Joined Zone {yellow}' . $Zone[ 'zone_position' ] .
 		'{normal} on Planet {green}' . $BestPlanetAndZone[ 'id' ] .
 		'{normal} - Captured: {yellow}' . number_format( $Zone[ 'capture_progress' ] * 100, 2 ) . '%' .
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Zone )
@@ -158,6 +157,7 @@ do
 			}, $Zone[ 'top_clans' ] ) )
 		);
 	}
+	
 	$SkippedLagTime = floor( curl_getinfo( $c, CURLINFO_TOTAL_TIME ) - curl_getinfo( $c, CURLINFO_STARTTRANSFER_TIME ) );
 	$LagAdjustedWaitTime = $WaitTime - $SkippedLagTime;
 	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
@@ -343,11 +343,17 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 			$TimeDelta = array_sum( $DifferenceTimes ) / count( $DifferenceTimes );
 			$PaceCutoff = ( array_sum( $Differences ) / count( $Differences ) ) * $TimeDelta;
-			$Cutoff = 1.0 - max( 0.1, $PaceCutoff );
+			$Cutoff = 1.0 - max( 0.1, $PaceCutoff ) / 1.05;
+			$PaceTime = $PaceCutoff > 0 ? ceil( ( 1 - $Zone[ 'capture_progress' ] ) / $PaceCutoff * $WaitTime ) : 1000;
+
+			if( 60 * 3 >= $PaceTime )
+			{
+				// If zone will finish soon, skip it
+				$Cutoff = 0.10;
+			}
 
 			if( $PaceCutoff > 0.02 )
 			{
-				$PaceTime = ceil( ( 1 - $Zone[ 'capture_progress' ] ) / $PaceCutoff * $WaitTime );
 				$Minutes = floor( $PaceTime / 60 );
 				$Seconds = $PaceTime % 60;
 
@@ -385,6 +391,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 			case 1: $LowZones++; break;
 		}
 
+		$Zone[ 'cutoff' ] = $Cutoff;
 		$CleanZones[] = $Zone;
 	}
 
@@ -560,7 +567,7 @@ function GetBestPlanetAndZone( &$SkippedPlanets, &$KnownPlanets, &$ZonePaces, $W
 
 		if( !$Planet[ 'state' ][ 'captured' ] )
 		{
-			Msg( '>> Next Zone is {green}' . $Planet[ 'best_zone' ][ 'zone_position' ] . '{normal} on Planet {green}' . $Planet[ 'id' ] . ' (' . $Planet[ 'state' ][ 'name' ] . ')' );
+			Msg( '>> Best Zone is {yellow}' . $Planet[ 'best_zone' ][ 'zone_position' ] . '{normal} on Planet {green}' . $Planet[ 'id' ] . ' (' . $Planet[ 'state' ][ 'name' ] . ')' );
 
 			return $Planet;
 		}
