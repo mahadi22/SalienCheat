@@ -6,13 +6,10 @@ if not exist php\php.exe (
 	PowerShell -ExecutionPolicy Unrestricted -File "downloadphp.ps1"
 )
 
-if not exist token.txt (
+if not exist token0.txt (
 	set /p token=Please get a token from here: https://steamcommunity.com/saliengame/gettoken and enter it: 
-	echo !token! > token.txt
+	echo !token! > token0.txt
 )
 
-echo The script can be terminated at any time by pressing Ctrl-C
-
-:start
-php\php.exe -f cheat.php
-goto start
+echo Installing are complete, run simplerun.bat to start the script
+pause
