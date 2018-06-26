@@ -1,6 +1,6 @@
-This repo are fork from [SteamDB Repo](https://github.com/SteamDatabase/SalienCheat)
-# How to use this
+###This repo are fork from [SteamDB Repo](https://github.com/SteamDatabase/SalienCheat)
 
+## How to use this
 ## First steps
 
 1. Join https://steamcommunity.com/groups/SteamDB (if you want to represent steamDB)
