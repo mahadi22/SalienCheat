@@ -44,3 +44,17 @@ php cheat.php token2
 
 1. Install `php-curl` and enable it in `php.ini`
 2. You know what you are doing. 🐧
+
+### Android (version 5/Lollipop minimal)
+
+1. Install "termux" from Google play store https://play.google.com/store/apps/details?id=com.termux
+2. Give permission for Termux to edit Storage
+3. Open Termux
+4. type "apt update"
+5. type "apt upgrade"  (type y if any question to continue appear)
+6. type "apt install termux-api php"  (type y if any question to continue appear)
+7. close termux, and create folder php in your internal storage
+8. place cheat.php and token0.txt in php folder
+9. get your token from https://steamcommunity.com/saliengame/gettoken and place it inside token0.txt file
+10. open termux, type "cd /sdcard/php/" or "cd /storage/emulated/0/php/"
+11. running the script, type "php cheat.php token0.txt"
