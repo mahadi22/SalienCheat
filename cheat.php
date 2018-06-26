@@ -1,5 +1,5 @@
 <?php
-//96c49ff
+//21861b2
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -62,7 +62,9 @@ if( strlen( $Token ) !== 32 )
 	exit( 1 );
 }
 
-$LocalScriptHash = $RepositoryScriptHash = GetRepositoryScriptHash();
+//$LocalScriptHash = sha1( trim( file_get_contents( __FILE__ ) ) );
+//$RepositoryScriptETag = '';
+//$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
 
 $WaitTime = 110;
 $KnownPlanets = [];
@@ -186,7 +188,7 @@ do
 
 	//if( $LocalScriptHash === $RepositoryScriptHash )
 	//{
-		//$RepositoryScriptHash = GetRepositoryScriptHash();
+		//$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
 	//}
 
 	//if( $LocalScriptHash !== $RepositoryScriptHash )
@@ -217,7 +219,7 @@ do
 	}
 
 	$WaitedTimeAfterJoinZone = microtime( true ) - $WaitedTimeAfterJoinZone;
-	Msg( '   {grey}Waited ' . number_format( $WaitedTimeAfterJoinZone, 3 ) . ' (+' . number_format( $SkippedLagTime, 4 ) . ' lag) total seconds before sending score' );
+	Msg( '   {grey}Waited ' . number_format( $WaitedTimeAfterJoinZone, 3 ) . ' (+' . number_format( $SkippedLagTime, 0 ) . ' lag) total seconds before sending score' );
 
 	$Data = SendPOST( 'ITerritoryControlMinigameService/ReportScore', 'access_token=' . $Token . '&score=' . GetScoreForZone( $Zone ) . '&language=english' );
 
@@ -244,20 +246,23 @@ do
 			'{normal} - Current Level: {green}' . $Data[ 'new_level' ] .
 			'{normal} (' . number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%)'
 		);
-		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
-		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT;
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
-		cli_set_process_title($setTitlex);
 		
 		$Time = ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * ( $WaitTime / 60 );
 		$Hours = floor( $Time / 60 );
 		$Minutes = $Time % 60;
+		$Date = date_create();
+		
+		date_add( $Date, date_interval_create_from_date_string( $Hours . " hours + " . $Minutes . " minutes" ) );
 		
 		Msg(
 			'>> Next Level: {yellow}' . number_format( $Data[ 'next_level_score' ] ) .
 			'{normal} XP - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
-			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm'
+			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm (' . date_format( $Date , "jS H:i T" ) . ')'
 		);
+		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
+		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ." ". $Hours . 'h' . $Minutes . 'm';
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+		cli_set_process_title($setTitlex);
 	}
 }
 while( true );
@@ -393,7 +398,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 				$ZoneMessages[] =
 				[
-					'     Zone {yellow}%3d{normal} - Captured: {yellow}%5s%%{normal} - Cutoff: {yellow}%5s%%{normal} - Pace: {yellow}%6s%%{normal} - ETA: {yellow}%2dm %2ds{normal}',
+					'  Zone {yellow}%3d{normal} - Captured: {yellow}%5s%%{normal} - Cutoff: {yellow}%5s%%{normal} - Pace: {yellow}%6s%%{normal} - ETA: {yellow}%2dm %2ds{normal}',
 					[
 						$Zone[ 'zone_position' ],
 						number_format( $Zone[ 'capture_progress' ] * 100, 2 ),
@@ -761,31 +766,42 @@ function ExecuteRequest( $Method, $URL, $Data = [] )
 	return $Data;
 }
 
-function GetRepositoryScriptHash()
+function GetRepositoryScriptHash( &$RepositoryScriptETag, $LocalScriptHash )
 {
 	$c_r = curl_init( );
 
+	$Time = time();
+	$Time = $Time - ( $Time % 10 );
+
 	curl_setopt_array( $c_r, [
-		CURLOPT_URL            => 'https://raw.githubusercontent.com/mahadi22/SalienCheat/master/cheat.php?_=' . time(),
+		CURLOPT_URL            => 'https://raw.githubusercontent.com/mahadi22/SalienCheat/master/cheat.php?_=' . $Time,
 		CURLOPT_USERAGENT      => 'SalienCheat (https://github.com/mahadi22/SalienCheat/)',
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING       => 'gzip',
 		CURLOPT_TIMEOUT        => 5,
 		CURLOPT_CONNECTTIMEOUT => 5,
 		CURLOPT_CAINFO         => __DIR__ . '/cacert.pem',
+		CURLOPT_HEADER         => 1,
+		CURLOPT_HTTPHEADER     =>
+		[
+			'If-None-Match: "' . $RepositoryScriptETag . '"'
+		]
 	] );
 
 	$Data = curl_exec( $c_r );
 
+	$HeaderSize = curl_getinfo( $c_r, CURLINFO_HEADER_SIZE );
+	$Header = substr( $Data, 0, $HeaderSize );
+	$Data = substr( $Data, $HeaderSize );
+
 	curl_close( $c_r );
 
-	if( strlen( $Data ) > 0 )
+	if( preg_match( '/ETag: "([a-z0-9]+)"/', $Header, $ETag ) === 1 )
 	{
-		return sha1( $Data );
+		$RepositoryScriptETag = $ETag[ 1 ];
 	}
 
-	global $LocalScriptHash;
-	return $LocalScriptHash;
+	return strlen( $Data ) > 0 ? sha1( trim( $Data ) ) : $LocalScriptHash;
 }
 
 function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
