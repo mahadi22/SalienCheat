@@ -9,7 +9,7 @@
 
 ## PHP
 
-### Windows
+### Windows 10 64bit
 ### Installing
 1. [Download this script](https://github.com/SteamDatabase/SalienCheat/archive/master.zip)
 2. Extract it into a new folder
