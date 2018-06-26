@@ -69,7 +69,6 @@ $RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalSc
 $WaitTime = 110;
 $KnownPlanets = [];
 $SkippedPlanets = [];
-				
 
 Msg( "\033[37;44mWelcome to SalienCheat for Everyone\033[0m" );
 
@@ -147,20 +146,6 @@ do
 	{
 		$Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] = 0.0;
 	}
-
-																
-																												
-  
-																					  
-
-	
-   
-																																		
-   
-																			
-
-		   
-  
 
 	Msg(
 		'>> Joined Zone {yellow}' . $Zone[ 'zone_position' ] .
@@ -347,9 +332,6 @@ function GetPlanetState( $Planet )
 	$LowZones = 0;
 	$ZoneMessages = [];
 
-																					
-												  
-
 	foreach( $Zones as &$Zone )
 	{
 		if( empty( $Zone[ 'capture_progress' ] ) )
@@ -372,58 +354,9 @@ function GetPlanetState( $Planet )
 			Msg( '{lightred}!! Unknown zone type: ' . $Zone[ 'type' ] );
 		}
 
-																  
-   
-															  
-										  
-					 
-						 
-
-																		
-	
-															   
-									
-																	  
-	
-
-																		  
-																					
 		$Cutoff = 0.97;
 		// If a zone is close to completion, skip it because we want to avoid joining a completed zone
 		// Valve now rewards points, if the zone is completed before submission
-							
-	
-										
-				   
-	
-
-						   
-	
-									   
-							  
-
-					 
-	 
-																																																										  
-	  
-							   
-																																			 
-															
-																		   
-			   
-			   
-	  
-	  
-	
-   
-	  
-   
-																		  
-				  
-   
-
-																				   
-										
 		if( $Zone[ 'capture_progress' ] >= $Cutoff )
 		{
 			continue;
@@ -436,35 +369,10 @@ function GetPlanetState( $Planet )
 			case 1: $LowZones++; break;
 		}
 
-							  
 		$CleanZones[] = $Zone;
 	}
 
 	unset( $Zone );
-
-																 
-
-						   
-  
-																   
-   
-																													
-   
-	  
-   
-						
-	
-																	 
-	
-
-																												 
-   
-  
-
-					  
-  
-												  
-  
 
 	if( empty( $CleanZones ) )
 	{
@@ -515,14 +423,6 @@ function GetBestPlanetAndZone( &$SkippedPlanets, &$KnownPlanets )
 
 		$KnownPlanets[ $Planet[ 'id' ] ] = true;
 
-											   
-   
-								  
-	
-				 
-	 
-   
-
 		do
 		{
 			$Zone = GetPlanetState( $Planet[ 'id' ] );
@@ -531,7 +431,6 @@ function GetBestPlanetAndZone( &$SkippedPlanets, &$KnownPlanets )
 
 		if( $Zone === false )
 		{
-									  
 			$SkippedPlanets[ $Planet[ 'id' ] ] = true;
 			$Planet[ 'high_zones' ] = 0;
 			$Planet[ 'medium_zones' ] = 0;
