@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//1d53137
+//69f4e6e
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -36,10 +36,10 @@ else
 	// otherwise, read it from disk
 	msg ("Enter your token files (ex; token0.txt): ");
 	$fileLoc = fgets(STDIN);
+	$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 	$setTitle0 = "SALIEN-" . $fileLoc;
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
-	$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 	$ParsedToken = json_decode( $Token, true );
 	
 	if( is_string( $ParsedToken ) )
@@ -60,9 +60,17 @@ if( strlen( $Token ) !== 32 )
 	exit( 1 );
 }
 
-$LocalScriptHash = sha1( trim( file_get_contents( __FILE__ ) ) );
-$RepositoryScriptETag = '';
-$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
+if( isset( $_SERVER[ 'IGNORE_UPDATES' ] ) && (bool)$_SERVER[ 'IGNORE_UPDATES' ] )
+{
+	$UpdateCheck = false;
+}
+else
+{
+	$UpdateCheck = true;
+	$LocalScriptHash = sha1( trim( file_get_contents( __FILE__ ) ) );
+	$RepositoryScriptETag = '';
+	$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
+}
 
 $WaitTime = 110;
 $ZonePaces = [];
@@ -168,21 +176,23 @@ do
 	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
 	$PlanetCheckTime = microtime( true );
 
-	if( $LocalScriptHash === $RepositoryScriptHash )
+	if( $UpdateCheck )
 	{
-		$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
-		$setTitle3 = "";
+		if( $LocalScriptHash === $RepositoryScriptHash )
+		{
+			$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
+			$setTitle3 = "";
+		}
+
+		if( $LocalScriptHash !== $RepositoryScriptHash )
+		{
+			Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
+			$setTitle3 = " =NewUpdate= ";
+		}
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+		cli_set_process_title($setTitlex);
 	}
 
-	if( $LocalScriptHash !== $RepositoryScriptHash )
-	{
-		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
-		$setTitle3 = " =NewUpdate= ";
-
-	}
-	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
-	cli_set_process_title($setTitlex);
-	
 	Msg( '   {grey}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 0 ) . ' seconds before rescanning planets...' );
 
 	usleep( $WaitTimeBeforeFirstScan * 1000000 );
@@ -379,7 +389,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 			$TimeDelta = array_sum( $DifferenceTimes ) / count( $DifferenceTimes );
 			$PaceCutoff = ( array_sum( $Differences ) / count( $Differences ) ) * $TimeDelta;
-			$Cutoff = 1.0 - max( 0.01, $PaceCutoff / 15 );
+			$Cutoff = 1.0 - max( 0.01, $PaceCutoff / 7 );
 			$PaceTime = $PaceCutoff > 0 ? ceil( ( 1 - $Zone[ 'capture_progress' ] ) / $PaceCutoff * $WaitTime ) : 1000;
 
 			if( $PaceCutoff > 0.015 )
@@ -459,6 +469,11 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 	{
 		if( $b[ 'difficulty' ] === $a[ 'difficulty' ] )
 		{
+			if( (int)( $a[ 'capture_progress' ] * 100 ) !== (int)( $b[ 'capture_progress' ] * 100 ) )
+			{
+				return (int)( $a[ 'capture_progress' ] * 100000 ) - (int)( $b[ 'capture_progress' ] * 100000 );
+			}
+
 			return $b[ 'zone_position' ] - $a[ 'zone_position' ];
 		}
 		
@@ -581,7 +596,7 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
 	$Planet = $Planets[ 0 ];
 
 	Msg(
-		'>> Best Zone is {yellow}' . $Planet[ 'best_zone' ][ 'zone_position' ] .
+		'>> Next Zone is {yellow}' . $Planet[ 'best_zone' ][ 'zone_position' ] .
 		'{normal} (Captured: {yellow}' . number_format( $Planet[ 'best_zone' ][ 'capture_progress' ] * 100, 2 ) . '%' .
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Planet[ 'best_zone' ] ) .
 		'{normal}) on Planet {green}' . $Planet[ 'id' ] .
