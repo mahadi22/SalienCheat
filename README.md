@@ -1,3 +1,4 @@
+This repo are fork from [SteamDB Repo](https://github.com/SteamDatabase/SalienCheat)
 # How to use this
 
 ## First steps
@@ -47,7 +48,7 @@ php cheat.php token2
 
 ### Android (version 5/Lollipop minimal)
 
-1. Install "termux" from Google play store https://play.google.com/store/apps/details?id=com.termux
+1. Install "termux" from [Google play store](https://play.google.com/store/apps/details?id=com.termux)
 2. Give permission for Termux to edit Storage
 3. Open Termux
 4. type "apt update"
