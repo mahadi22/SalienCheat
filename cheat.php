@@ -171,16 +171,18 @@ do
 	if( $LocalScriptHash === $RepositoryScriptHash )
 	{
 		$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
+		$setTitle3 = "";
 	}
 
 	if( $LocalScriptHash !== $RepositoryScriptHash )
 	{
 		Msg( '-- {lightred}Script has been updated on GitHub since you started this script, please make sure to update.' );
 		$setTitle3 = " =NewUpdate= ";
-		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
-		cli_set_process_title($setTitlex);
-	}
 
+	}
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+	cli_set_process_title($setTitlex);
+	
 	Msg( '   {grey}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 0 ) . ' seconds before rescanning planets...' );
 
 	usleep( $WaitTimeBeforeFirstScan * 1000000 );
