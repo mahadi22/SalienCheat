@@ -2,13 +2,11 @@
 
 ## First steps
 
-1. Join https://steamcommunity.com/groups/SteamDB (if you to represent steamDB)
+1. Join https://steamcommunity.com/groups/SteamDB (if you want to represent steamDB)
 2. Open https://steamcommunity.com/saliengame/gettoken and save it as `token0.txt` in the same folder as `cheat.php`
 3. Select PHP or Python version of the script. You don't need both
 
 ## PHP
-
-📣 [Check this reddit thread for a complete guide and troubleshooting](https://redd.it/8t5w8v)
 
 ### Windows
 ### Installing
