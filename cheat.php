@@ -250,14 +250,11 @@ do
 		$Time = ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * ( $WaitTime / 60 );
 		$Hours = floor( $Time / 60 );
 		$Minutes = $Time % 60;
-		$Date = date_create();
-		
-		date_add( $Date, date_interval_create_from_date_string( $Hours . " hours + " . $Minutes . " minutes" ) );
-		
+				
 		Msg(
 			'>> Next Level: {yellow}' . number_format( $Data[ 'next_level_score' ] ) .
 			'{normal} XP - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
-			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm (' . date_format( $Date , "jS H:i T" ) . ')'
+			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm'
 		);
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ." ". $Hours . 'h' . $Minutes . 'm';
