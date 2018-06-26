@@ -11,7 +11,7 @@
 
 ### Windows 10 64bit
 ### Installing
-1. [Download this script](https://github.com/SteamDatabase/SalienCheat/archive/master.zip)
+1. [Download this script](https://github.com/mahadi22/SalienCheat/archive/master.zip)
 2. Extract it into a new folder
 3. Click `cheat.bat` and follow instructions
 
