@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//69f4e6e
+//4d4cc5a
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -74,6 +74,7 @@ else
 
 $WaitTime = 110;
 $ZonePaces = [];
+$OldScore = 0;
 
 Msg( "\033[37;44mWelcome to SalienCheat for Everyone\033[0m" );
 
@@ -100,7 +101,7 @@ do
 		//}
 	}
 }
-while( !isset( $Data[ 'response' ][ 'score' ] ) );
+while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( 1 ) === 0 );
 
 do
 {
@@ -124,7 +125,7 @@ do
 			$SteamThinksPlanet = LeaveCurrentGame( $Token );
 		}
 	}
-	while( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet );
+	while( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet && sleep( 1 ) === 0 );
 
 	$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinZone', 'zone_position=' . $BestPlanetAndZone[ 'best_zone' ][ 'zone_position' ] . '&access_token=' . $Token );
 	$WaitedTimeAfterJoinZone = microtime( true );
@@ -234,24 +235,31 @@ do
 
 		echo PHP_EOL;
 
+		// Store our own old score because the API may increment score while giving an error (e.g. a timeout)
+		if( !$OldScore )
+		{
+			$OldScore = $Data[ 'old_score' ];
+		}
+
 		Msg(
 			'>> Your Score: {lightred}' . number_format( $Data[ 'new_score' ] ) .
-			'{yellow} (+' . number_format( $Data[ 'new_score' ] - $Data[ 'old_score' ] ) . ')' .
+			'{yellow} (+' . number_format( $Data[ 'new_score' ] - $OldScore ) . ')' .
 			'{normal} - Current Level: {green}' . $Data[ 'new_level' ] .
 			'{normal} (' . number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%)'
 		);
 		
+		$OldScore = $Data[ 'new_score' ];
 		$Time = ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * ( $WaitTime / 60 );
 		$Hours = floor( $Time / 60 );
 		$Minutes = $Time % 60;
-		//$Date = date_create();
+		$Date = date_create();
 		
-		//date_add( $Date, date_interval_create_from_date_string( $Hours . " hours + " . $Minutes . " minutes" ) );
+		date_add( $Date, date_interval_create_from_date_string( $Hours . " hours + " . $Minutes . " minutes" ) );
 		
 		Msg(
 			'>> Next Level: {yellow}' . number_format( $Data[ 'next_level_score' ] ) .
 			'{normal} XP - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
-			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm'
+			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm (' . date_format( $Date , "jS H:i T" ) . ')'
 		);
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ." ". $Hours . 'h' . $Minutes . 'm';
@@ -617,7 +625,7 @@ function LeaveCurrentGame( $Token, $LeaveCurrentPlanet = 0 )
 			SendPOST( 'IMiniGameService/LeaveGame', 'access_token=' . $Token . '&gameid=' . $Data[ 'response' ][ 'active_zone_game' ] );
 		}
 	}
-	while( !isset( $Data[ 'response' ][ 'score' ] ) );
+	while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( 1 ) === 0 );
 
 	if( !isset( $Data[ 'response' ][ 'active_planet' ] ) )
 	{
@@ -630,6 +638,8 @@ function LeaveCurrentGame( $Token, $LeaveCurrentPlanet = 0 )
 	{
 		Msg( '   Leaving planet {green}' . $ActivePlanet . '{normal} because we want to be on {green}' . $LeaveCurrentPlanet );
 		Msg( '   Time accumulated on planet {green}' . $ActivePlanet . '{normal}: {yellow}' . gmdate( 'H\h m\m s\s', $Data[ 'response' ][ 'time_on_planet' ] ) );
+
+		echo PHP_EOL;
 
 		SendPOST( 'IMiniGameService/LeaveGame', 'access_token=' . $Token . '&gameid=' . $ActivePlanet );
 	}
@@ -672,7 +682,7 @@ function GetCurl( )
 			'Origin: https://steamcommunity.com',
 			'Referer: https://steamcommunity.com/saliengame/play',
 			'Connection: Keep-Alive',
-			'Keep-Alive: 300'
+			'Keep-Alive: timeout=300'
 		],
 	] );
 
