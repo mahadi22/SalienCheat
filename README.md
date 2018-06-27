@@ -9,21 +9,15 @@
 
 ## PHP
 
-### Windows 10 64bit
-
-<details>
-  <summary>Click To Expand</sumary>
-  
+### Windows 10 64bit  
 ### Installing
 1. [Download this script](https://github.com/mahadi22/SalienCheat/archive/master.zip)
 2. Extract it into a new folder
 3. Click `cheat.bat` and follow instructions
 
-
 ### How to run
 1. open simplerun.bat
 2. input your token string (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) or your token file name complete with extension (token0.txt)
-
 
 Another way to run, good for multiple account              
 ```
@@ -34,7 +28,6 @@ Another way to run, good for multiple account
 
 ![OnAction](https://i.imgur.com/6C9bwVC.png)
 
-</details>
 
 ### Mac
 
