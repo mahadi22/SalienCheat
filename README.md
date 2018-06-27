@@ -10,6 +10,7 @@
 ## PHP
 
 ### Windows 10 64bit
+
 <details>
   <summary>Click To Expand</sumary>
   
@@ -32,6 +33,7 @@ Another way to run, good for multiple account
 ```
 
 ![OnAction](https://i.imgur.com/6C9bwVC.png)
+
 </details>
 
 ### Mac
