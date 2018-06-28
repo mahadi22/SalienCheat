@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//efc9861
+//bc184b3
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -41,7 +41,7 @@ else
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
 	$ParsedToken = json_decode( $Token, true );
-	
+
 	if( is_string( $ParsedToken ) )
 	{
 		$Token = $ParsedToken;
@@ -50,7 +50,7 @@ else
 	{
 		$Token = $ParsedToken[ 'token' ];
 	}
-	
+
 	unset( $ParsedToken );
 }
 
@@ -89,7 +89,6 @@ $WaitTime = 110;
 $ZonePaces = [];
 $OldScore = 0;
 $LastKnownPlanet = 0;
-$LastKnownZone = 0;
 
 Msg( "{background-blue}Welcome to SalienCheat for Everyone" );
 
@@ -141,11 +140,11 @@ do
 		{
 			// Leave current game before trying to switch planets (it will report InvalidState otherwise)
 			$SteamThinksPlanet = LeaveCurrentGame( $Token, $BestPlanetAndZone[ 'id' ] );
-		
+
 			if( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet )
 			{
 				SendPOST( 'ITerritoryControlMinigameService/JoinPlanet', 'id=' . $BestPlanetAndZone[ 'id' ] . '&access_token=' . $Token );
-		
+
 				$SteamThinksPlanet = LeaveCurrentGame( $Token );
 			}
 		}
@@ -168,22 +167,17 @@ do
 		{
 			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
 		}
-		while( !$BestPlanetAndZone && sleep( 5 ) === 0 );
+		while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
 
 		continue;
 	}
 
 	$Zone = $Zone[ 'response' ][ 'zone_info' ];
 
-	if( empty( $Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] ) )
-	{
-		$Zone[ 'response' ][ 'zone_info' ][ 'capture_progress' ] = 0.0;
-	}
-
 	Msg(
 		'++ Joined Zone {yellow}' . $Zone[ 'zone_position' ] .
 		'{normal} on Planet {green}' . $BestPlanetAndZone[ 'id' ] .
-		'{normal} - Captured: {yellow}' . number_format( $Zone[ 'capture_progress' ] * 100, 2 ) . '%' .
+		'{normal} - Captured: {yellow}' . number_format( empty( $Zone[ 'capture_progress' ] ) ? 0.0 : ( $Zone[ 'capture_progress' ] * 100 ), 2 ) . '%' .
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Zone )
 	);
 	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
@@ -208,7 +202,7 @@ do
 		if( $LocalScriptHash === $RepositoryScriptHash )
 		{
 			$RepositoryScriptHash = GetRepositoryScriptHash( $RepositoryScriptETag, $LocalScriptHash );
-			$setTitle3 = "";
+			$setTitle3 = " ";
 		}
 
 		if( $LocalScriptHash !== $RepositoryScriptHash )
@@ -228,7 +222,7 @@ do
 	{
 		$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
 	}
-	while( !$BestPlanetAndZone && sleep( 5 ) === 0 );
+	while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
 
 	$LagAdjustedWaitTime -= microtime( true ) - $PlanetCheckTime;
 
@@ -270,20 +264,20 @@ do
 			'{normal} - Current Level: {green}' . $Data[ 'new_level' ] .
 			'{normal} (' . number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%)'
 		);
-		
+
 		$OldScore = $Data[ 'new_score' ];
 		$WaitTimeSeconds = $WaitTime / 60;
 		$Time = ( ( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) / GetScoreForZone( [ 'difficulty' => $Zone[ 'difficulty' ] ] ) * $WaitTimeSeconds ) + $WaitTimeSeconds;
 		$Hours = floor( $Time / 60 );
 		$Minutes = $Time % 60;
 		$Date = date_create();
-		
+
 		date_add( $Date, date_interval_create_from_date_string( $Hours . " hours + " . $Minutes . " minutes" ) );
-		
+
 		Msg(
 			'>> Next Level: {yellow}' . number_format( $Data[ 'next_level_score' ] ) .
-			'{normal} XP - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
-			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm (' . date_format( $Date , "jS H:i T" ) . ')'
+			'{normal} - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
+			'{normal} - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm (' . date_format( $Date , "jS H:i T" ) . ')'
 		);
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ." ". $Hours . 'h' . $Minutes . 'm';
@@ -328,7 +322,12 @@ function GetNextLevelProgress( $Data )
 		9600000, // Level 17
 		10800000, // Level 18
 		12000000, // Level 19
-		13200000, // Level 20
+		14400000, // Level 20
+		16800000, // Level 21
+		19200000, // Level 22
+		21600000, // Level 23
+		24000000, // Level 24
+		26400000, // Level 25
 	];
 
 	$PreviousLevel = $Data[ 'new_level' ] - 1;
@@ -503,8 +502,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 	{
 		$CleanZones = $BossZones;
 	}
-
-	if( empty( $CleanZones ) )
+	else if( count( $CleanZones ) < 2 )
 	{
 		return false;
 	}
@@ -520,7 +518,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 			return $b[ 'zone_position' ] - $a[ 'zone_position' ];
 		}
-		
+
 		return $b[ 'difficulty' ] - $a[ 'difficulty' ];
 	} );
 
@@ -572,7 +570,7 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
 		{
 			$Zone = GetPlanetState( $Planet[ 'id' ], $ZonePaces, $WaitTime );
 		}
-		while( $Zone === null && sleep( 5 ) === 0 );
+		while( $Zone === null && sleep( 1 ) === 0 );
 
 		if( $Zone === false )
 		{
@@ -590,7 +588,7 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
 		}
 
 		Msg(
-			'>> Planet {green}%3d{normal} - Captured: {green}%5s%%{normal} - High: {yellow}%2d{normal} - Medium: {yellow}%2d{normal} - Low: {yellow}%2d{normal} - Players: {yellow}%8s {green}(%s)',
+			'>> Planet {green}%3d{normal} - Captured: {green}%5s%%{normal} - High: {yellow}%2d{normal} - Medium: {yellow}%2d{normal} - Low: {yellow}%2d{normal} - Players: {yellow}%7s {green}(%s)',
 			PHP_EOL,
 			[
 				$Planet[ 'id' ],
@@ -616,6 +614,8 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
 
 				return $Planet;
 			}
+
+			$Planet[ 'sort_key' ] += (int)( $Planet[ 'state' ][ 'capture_progress' ] * 100 );
 
 			if( $Planet[ 'low_zones' ] > 0 )
 			{
