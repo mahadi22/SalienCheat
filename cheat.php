@@ -135,8 +135,6 @@ do
 		while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
 	}
 
-  
- 
 	echo PHP_EOL;
 
 	// Only get player info and leave current planet if it changed
@@ -167,14 +165,6 @@ do
 	{
 		Msg( '{lightred}!! Failed to join a zone, rescanning and restarting...' );
 		$BestPlanetAndZone = 0;
-			 
-
-	
-   
-																	  
-   
-																			
-
 		continue;
 	}
 
@@ -189,15 +179,6 @@ do
 	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
-									
-  
-	  
-																
-	
-						  
-							  
-	
-  
 	$SkippedLagTime = curl_getinfo( $c, CURLINFO_TOTAL_TIME ) - curl_getinfo( $c, CURLINFO_STARTTRANSFER_TIME );
 	$SkippedLagTime -= fmod( $SkippedLagTime, 0.1 );
 	$LagAdjustedWaitTime = $WaitTime - $SkippedLagTime;
@@ -722,9 +703,6 @@ function GetCurl( )
 		CURLOPT_CAINFO         => __DIR__ . '/cacert.pem',
 		CURLOPT_HTTPHEADER     =>
 		[
-				 
-										
-																																	  
 			'Connection: Keep-Alive',
 			'Keep-Alive: timeout=300'
 		],
