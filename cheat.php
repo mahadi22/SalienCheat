@@ -109,7 +109,7 @@ do
 		//{
 			//Msg( '{green}-- You are currently not representing any clan, so you are now part of xxxx' );
 			//Msg( '{green}-- Make sure to join{yellow} xxxx {green}on Steam' );
-	
+			
 			//SendPOST( 'ITerritoryControlMinigameService/RepresentClan', 'clanid=4066397&access_token=' . $Token );
 		//}
 		//else if( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] != 4066397 )
@@ -134,9 +134,8 @@ do
 		}
 		while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
 	}
-
+	
 	echo PHP_EOL;
-
 	// Only get player info and leave current planet if it changed
 	if( $LastKnownPlanet !== $BestPlanetAndZone[ 'id' ] )
 	{
@@ -144,22 +143,22 @@ do
 		{
 			// Leave current game before trying to switch planets (it will report InvalidState otherwise)
 			$SteamThinksPlanet = LeaveCurrentGame( $Token, $BestPlanetAndZone[ 'id' ] );
-
+			
 			if( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet )
 			{
 				SendPOST( 'ITerritoryControlMinigameService/JoinPlanet', 'id=' . $BestPlanetAndZone[ 'id' ] . '&access_token=' . $Token );
-
+				
 				$SteamThinksPlanet = LeaveCurrentGame( $Token );
 			}
 		}
 		while( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet && sleep( 1 ) === 0 );
-
+	
 		$LastKnownPlanet = $BestPlanetAndZone[ 'id' ];
 	}
-
+	
 	$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinZone', 'zone_position=' . $BestPlanetAndZone[ 'best_zone' ][ 'zone_position' ] . '&access_token=' . $Token );
 	$PlanetCheckTime = microtime( true );
-
+	
 	// Rescan planets if joining failed
 	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) )
 	{
@@ -167,9 +166,9 @@ do
 		$BestPlanetAndZone = 0;
 		continue;
 	}
-
+	
 	$Zone = $Zone[ 'response' ][ 'zone_info' ];
-
+	
 	Msg(
 		'++ Joined Zone {yellow}' . $Zone[ 'zone_position' ] .
 		'{normal} on Planet {green}' . $BestPlanetAndZone[ 'id' ] .
