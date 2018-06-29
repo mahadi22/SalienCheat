@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//bc184b3
+//b7e7944
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -89,12 +89,13 @@ $WaitTime = 110;
 $ZonePaces = [];
 $OldScore = 0;
 $LastKnownPlanet = 0;
+$BestPlanetAndZone = 0;
 
 Msg( "{background-blue}Welcome to SalienCheat for Everyone" );
 
 if( ini_get( 'precision' ) < 18 )
 {
-	Msg( '{grey}Fixed php float precision (was ' . ini_get( 'precision' ) . ')' );
+	Msg( '{teal}Fixed php float precision (was ' . ini_get( 'precision' ) . ')' );
 	ini_set( 'precision', '18' );
 }
 
@@ -125,12 +126,17 @@ while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( 1 ) === 0 );
 
 do
 {
-	$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
-}
-while( !$BestPlanetAndZone && sleep( 5 ) === 0 );
+	if( !$BestPlanetAndZone )
+	{
+		do
+		{
+			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
+		}
+		while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
+	}
 
-do
-{
+  
+ 
 	echo PHP_EOL;
 
 	// Only get player info and leave current planet if it changed
@@ -160,14 +166,14 @@ do
 	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) )
 	{
 		Msg( '{lightred}!! Failed to join a zone, rescanning and restarting...' );
+		$BestPlanetAndZone = 0;
+			 
 
-		sleep( 1 );
-
-		do
-		{
-			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
-		}
-		while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
+	
+   
+																	  
+   
+																			
 
 		continue;
 	}
@@ -183,19 +189,19 @@ do
 	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
-	if( isset( $Zone[ 'top_clans' ] ) )
-	{
-		Msg(
-			'-- Top clans: ' . implode(', ', array_map( function( $Clan )
-			{
-				return $Clan[ 'url' ];
-			}, $Zone[ 'top_clans' ] ) )
-		);
-	}
+									
+  
+	  
+																
+	
+						  
+							  
+	
+  
 	$SkippedLagTime = curl_getinfo( $c, CURLINFO_TOTAL_TIME ) - curl_getinfo( $c, CURLINFO_STARTTRANSFER_TIME );
 	$SkippedLagTime -= fmod( $SkippedLagTime, 0.1 );
 	$LagAdjustedWaitTime = $WaitTime - $SkippedLagTime;
-	$WaitTimeBeforeFirstScan = 50 + ( 50 - $SkippedLagTime );
+	$WaitTimeBeforeFirstScan = $WaitTime - $SkippedLagTime - 10;
 
 	if( $UpdateCheck )
 	{
@@ -214,7 +220,7 @@ do
 		cli_set_process_title($setTitlex);
 	}
 
-	Msg( '   {grey}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 3 ) . ' (+' . number_format( $SkippedLagTime, 3 ) . ' second lag) seconds before rescanning planets...' );
+	Msg( '   {teal}Waiting ' . number_format( $WaitTimeBeforeFirstScan, 3 ) . ' (+' . number_format( $SkippedLagTime, 3 ) . ' second lag) seconds before rescanning planets...' );
 
 	usleep( $WaitTimeBeforeFirstScan * 1000000 );
 
@@ -228,14 +234,14 @@ do
 
 	if( $LagAdjustedWaitTime > 0 )
 	{
-		Msg( '   {grey}Waiting ' . number_format( $LagAdjustedWaitTime, 3 ) . ' remaining seconds before submitting score...' );
+		Msg( '   {teal}Waiting ' . number_format( $LagAdjustedWaitTime, 3 ) . ' remaining seconds before submitting score...' );
 
 		usleep( $LagAdjustedWaitTime * 1000000 );
 	}
 
 	$Data = SendPOST( 'ITerritoryControlMinigameService/ReportScore', 'access_token=' . $Token . '&score=' . GetScoreForZone( $Zone ) . '&language=english' );
 
-	if( $Data[ 'eresult' ] == 93 )
+	if( empty( $Data[ 'response' ][ 'new_score' ] ) )
 	{
 		$LagAdjustedWaitTime = min( 10, round( $SkippedLagTime ) );
 
@@ -414,7 +420,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 			Msg( '{lightred}!! Unknown zone type: ' . $Zone[ 'type' ] );
 		}
 
-		$Cutoff = 0.99;
+		$Cutoff = $Zone[ 'difficulty' ] < 2 ? 0.90 : 0.99;
 
 		if( isset( $ZonePaces[ $Planet ][ $Zone[ 'zone_position' ] ] ) )
 		{
@@ -432,7 +438,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 
 			$TimeDelta = array_sum( $DifferenceTimes ) / count( $DifferenceTimes );
 			$PaceCutoff = ( array_sum( $Differences ) / count( $Differences ) ) * $TimeDelta;
-			$Cutoff = 1.0 - max( 0.01, $PaceCutoff / 7 );
+			$Cutoff = 1.0 - max( 1.0 - $Cutoff, $PaceCutoff / 7 );
 			$PaceTime = $PaceCutoff > 0 ? ceil( ( 1 - $Zone[ 'capture_progress' ] ) / $PaceCutoff * $WaitTime ) : 1000;
 
 			if( $PaceCutoff > 0.015 )
@@ -675,7 +681,7 @@ function LeaveCurrentGame( $Token, $LeaveCurrentPlanet = 0 )
 	if( $LeaveCurrentPlanet > 0 && $LeaveCurrentPlanet !== $ActivePlanet )
 	{
 		Msg( '   Leaving planet {green}' . $ActivePlanet . '{normal} because we want to be on {green}' . $LeaveCurrentPlanet );
-		Msg( '   Time accumulated on planet {green}' . $ActivePlanet . '{normal}: {yellow}' . gmdate( 'H\h m\m s\s', $Data[ 'response' ][ 'time_on_planet' ] ) );
+		Msg( '   Time accumulated on planet {green}' . $ActivePlanet . '{normal}: {yellow}' . gmdate( 'H\h i\m s\s', $Data[ 'response' ][ 'time_on_planet' ] ) );
 
 		echo PHP_EOL;
 
@@ -707,18 +713,18 @@ function GetCurl( )
 	$c = curl_init( );
 
 	curl_setopt_array( $c, [
-		CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
+		CURLOPT_USERAGENT      => 'SalienCheat (https://github.com/mahadi22/SalienCheat/)',
 		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_ENCODING       => 'gzip',
+		CURLOPT_ENCODING       => '', // Let curl decide best encoding on its own
 		CURLOPT_TIMEOUT        => 30,
 		CURLOPT_CONNECTTIMEOUT => 10,
 		CURLOPT_HEADER         => 1,
 		CURLOPT_CAINFO         => __DIR__ . '/cacert.pem',
 		CURLOPT_HTTPHEADER     =>
 		[
-			'Accept: */*',
-			'Origin: https://steamcommunity.com',
-			'Referer: https://steamcommunity.com/saliengame/play',
+				 
+										
+																																	  
 			'Connection: Keep-Alive',
 			'Keep-Alive: timeout=300'
 		],
@@ -857,7 +863,7 @@ function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
 			'{green}',
 			'{yellow}',
 			'{lightred}',
-			'{grey}',
+			'{teal}',
 			'{background-blue}',
 		],
 		$DisableColors ? '' : [
