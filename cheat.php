@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//d545ce6
+//1993835
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -10,6 +10,9 @@ if( !file_exists( __DIR__ . '/cacert.pem' ) )
 }
 
 $setTitle1 = $setTitle2  = $setTitle3  = "";
+// Pass env ACCOUNTID, get it from salien page source code called 'gAccountID'
+$AccountID = isset( $_SERVER[ 'ACCOUNTID' ] ) ? (int)$_SERVER[ 'ACCOUNTID' ] : 0;
+
 if( $argc === 2 )
 {
 	$fileLoc = $argv[ 1 ];
@@ -49,6 +52,9 @@ else
 	else if( isset( $ParsedToken[ 'token' ] ) )
 	{
 		$Token = $ParsedToken[ 'token' ];
+		$AccountID = GetAccountID( $ParsedToken[ 'steamid' ] );
+
+		Msg( 'Your SteamID is ' . $ParsedToken[ 'steamid' ] . ' - AccountID is ' . $AccountID );
 	}
 
 	unset( $ParsedToken );
@@ -59,9 +65,6 @@ if( strlen( $Token ) !== 32 )
 	Msg( '{lightred} Failed to find your token. Verify your token correct/token file exist.' );
 	exit( 1 );
 }
-
-// Pass env ACCOUNTID, get it from salien page source code called 'gAccountID'
-$AccountID = isset( $_SERVER[ 'ACCOUNTID' ] ) ? (int)$_SERVER[ 'ACCOUNTID' ] : 0;
 
 if( isset( $_SERVER[ 'IGNORE_UPDATES' ] ) && (bool)$_SERVER[ 'IGNORE_UPDATES' ] )
 {
@@ -179,7 +182,7 @@ do
 		}
 
 		$BossFailsAllowed = 10;
-		$NextHeal = microtime( true ) + mt_rand( 120, 300 );
+		$NextHeal = microtime( true ) + mt_rand( 120, 180 );
 
 		do
 		{
@@ -190,7 +193,7 @@ do
 			if( microtime( true ) >= $NextHeal )
 			{
 				$UseHeal = 1;
-				$NextHeal = microtime( true ) + mt_rand( 120, 300 );
+				$NextHeal = microtime( true ) + 120;
 
 				Msg( '{teal}@@ Using heal ability' );
 			}
@@ -213,7 +216,10 @@ do
 				continue;
 			}
 
-			usort( $Data[ 'response' ][ 'boss_status' ][ 'boss_players' ], function( $a, $b ) use ( $AccountID )
+			// Strip names down to basic ASCII.
+			$RegMask = '/[\x00-\x1F\x7F-\xFF]/';
+
+			usort( $Data[ 'response' ][ 'boss_status' ][ 'boss_players' ], function( $a, $b ) use ( $AccountID, $RegMask )
 			{
 				if( $a[ 'accountid' ] == $AccountID )
 				{
@@ -224,22 +230,27 @@ do
 					return -1;
 				}
 
-				if( $b[ 'xp_earned' ] == $a[ 'xp_earned' ] )
-				{
-					return $b[ 'hp' ] - $a[ 'hp' ];
-				}
-
-				return $b[ 'xp_earned' ] - $a[ 'xp_earned' ];
+				return strcmp( preg_replace( $RegMask, '', $a['name'] ), preg_replace( $RegMask, '', $b['name'] ) );
 			} );
+
+			$MyPlayer = null;
 
 			foreach( $Data[ 'response' ][ 'boss_status' ][ 'boss_players' ] as $Player )
 			{
+				$IsThisMe = $Player[ 'accountid' ] == $AccountID;
+				$DefaultColor = $IsThisMe ? '{green}' : '{normal}';
+
+				if( $IsThisMe )
+				{
+					$MyPlayer = $Player;
+				}
+
 				Msg(
-					( $Player[ 'accountid' ] == $AccountID ? '{green}@@' : '  ' ) .
-					' Player %9d - HP: %6s / %6s - Score: %10s',
+					( $IsThisMe ? '{green}@@' : '  ' ) .
+					' %-20s - HP: {yellow}%6s' . $DefaultColor  . ' / %6s - Score Gained: {yellow}%10s' . $DefaultColor,
 					PHP_EOL,
 					[
-						$Player[ 'accountid' ],
+						substr( preg_replace( $RegMask, '', $Player[ 'name' ] ), 0, 20 ),
 						$Player[ 'hp' ],
 						$Player[ 'max_hp' ],
 						number_format( $Player[ 'xp_earned' ] )
@@ -262,11 +273,15 @@ do
 				Msg( '{green}@@ Waiting for players...' );
 				continue;
 			}
-			else
+
+			Msg( '@@ Boss HP: {green}' . number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] ) . '{normal} / {lightred}' .  number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] ) . '{normal} - Lasers: {yellow}' . $Data[ 'response' ][ 'num_laser_uses' ] . '{normal} - Team Heals: {green}' . $Data[ 'response' ][ 'num_team_heals' ] );
+
+			if( $MyPlayer !== null )
 			{
-				Msg( '@@ Boss HP: {green}' . number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] ) . '{normal} / {lightred}' .  number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] ) . '{normal} - Lasers: {yellow}' . $Data[ 'response' ][ 'num_laser_uses' ] . '{normal} - Team Heals: {green}' . $Data[ 'response' ][ 'num_team_heals' ] );
-				echo PHP_EOL;
+				Msg( '@@ Start: ' . number_format( $MyPlayer[ 'score_on_join' ] ) . ' (L' . $MyPlayer[ 'level_on_join' ] . ') - Current: ' . number_format( $MyPlayer[ 'score_on_join' ] + $MyPlayer[ 'xp_earned' ] ) . ' (' . ( $MyPlayer[ 'level_on_join' ] != $MyPlayer[ 'new_level' ] ? '{lightred}' : '' ) . 'L' . $MyPlayer[ 'new_level' ] );
 			}
+
+			echo PHP_EOL;
 		}
 		while( sleep( 5 ) === 0 );
 
@@ -521,6 +536,12 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 		if( $Zone[ 'type' ] == 4 && $Zone[ 'boss_active' ] )
 		{
 			$BossZones[] = $Zone;
+		}
+
+		// Skip zone 0 if it's not a boss and has no capture progress, since it's currently not allowing joins on new planets.
+		if ( $Zone[ 'zone_position' ] == 0 && $Zone[ 'capture_progress' ] == 0 )
+		{
+			continue;
 		}
 
 		$Cutoff = $Zone[ 'difficulty' ] < 2 ? 0.90 : 0.99;
@@ -956,6 +977,20 @@ function GetRepositoryScriptHash( &$RepositoryScriptETag, $LocalScriptHash )
 	}
 
 	return strlen( $Data ) > 0 ? sha1( trim( $Data ) ) : $LocalScriptHash;
+}
+
+function GetAccountID( $SteamID )
+{
+	if( PHP_INT_SIZE === 8 )
+	{
+		return $SteamID & 0xFFFFFFFF;
+	}
+	else if( function_exists( 'gmp_and' ) )
+	{
+		return gmp_and( $SteamID, '0xFFFFFFFF' );
+	}
+
+	return 0;
 }
 
 function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
