@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//1993835
+//0099b1d
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -97,6 +97,7 @@ $ZonePaces = [];
 $OldScore = 0;
 $LastKnownPlanet = 0;
 $BestPlanetAndZone = 0;
+$PreferLowZones = 0;
 
 Msg( "{background-blue}Welcome to SalienCheat for Everyone" );
 
@@ -129,9 +130,19 @@ do
 			//Msg( '{green}--{yellow} https://steamcommunity.com/saliengame/play' );
 			//Msg( '{green}-- Happy farming!' );
 		//}
+
+		if( $Data[ 'response' ][ 'level' ] > 20 )
+		{
+			$PreferLowZones = 1;
+		}
 	}
 }
 while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( $FailSleep ) === 0 );
+
+if( isset( $_SERVER[ 'PREFER_LOW_ZONES' ] ) )
+{
+	$PreferLowZones = (bool)$_SERVER[ 'PREFER_LOW_ZONES' ];
+}
 
 do
 {
@@ -139,7 +150,7 @@ do
 	{
 		do
 		{
-			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime, $FailSleep );
+			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $PreferLowZones, $WaitTime, $FailSleep );
 		}
 		while( !$BestPlanetAndZone && sleep( $FailSleep ) === 0 );
 	}
@@ -343,9 +354,18 @@ do
 
 	do
 	{
-		$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime, $FailSleep );
+		$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $PreferLowZones, $WaitTime, $FailSleep );
 	}
 	while( !$BestPlanetAndZone && sleep( $FailSleep ) === 0 );
+
+	if( $BestPlanetAndZone[ 'best_zone' ][ 'boss_active' ] )
+	{
+		Msg( '{green}Boss detected, abandoning current zone and joining boss...' );
+
+		$LastKnownPlanet = 0;
+
+		continue;
+	}
 
 	$LagAdjustedWaitTime -= microtime( true ) - $PlanetCheckTime;
 
@@ -402,6 +422,11 @@ do
 			'{normal} - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
 			'{normal} - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm (' . date_format( $Date , "jS H:i T" ) . ')'
 		);
+
+		if( $Data[ 'new_level' ] > 20 && !isset( $_SERVER[ 'PREFER_LOW_ZONES' ] ) )
+		{
+			$PreferLowZones = 1;
+		}
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
 		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ." ". $Hours . 'h' . $Minutes . 'm';
 		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
@@ -495,7 +520,7 @@ function GetNameForDifficulty( $Zone )
 	return $Boss . $Difficulty;
 }
 
-function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
+function GetPlanetState( $Planet, &$ZonePaces, $PreferLowZones, $WaitTime )
 {
 	$Zones = SendGET( 'ITerritoryControlMinigameService/GetPlanet', 'id=' . $Planet . '&language=english' );
 
@@ -544,7 +569,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 			continue;
 		}
 
-		$Cutoff = $Zone[ 'difficulty' ] < 2 ? 0.90 : 0.99;
+		$Cutoff = ( $Zone[ 'difficulty' ] < 2 && !$PreferLowZones ) ? 0.90 : 0.99;
 
 		if( isset( $ZonePaces[ $Planet ][ $Zone[ 'zone_position' ] ] ) )
 		{
@@ -637,7 +662,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 		return false;
 	}
 
-	usort( $CleanZones, function( $a, $b )
+	usort( $CleanZones, function( $a, $b ) use( $PreferLowZones )
 	{
 		if( $b[ 'difficulty' ] === $a[ 'difficulty' ] )
 		{
@@ -647,6 +672,11 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 			}
 
 			return $b[ 'zone_position' ] - $a[ 'zone_position' ];
+		}
+
+		if( $PreferLowZones )
+		{
+			return $a[ 'difficulty' ] - $b[ 'difficulty' ];
 		}
 
 		return $b[ 'difficulty' ] - $a[ 'difficulty' ];
@@ -661,7 +691,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 	];
 }
 
-function GetBestPlanetAndZone( &$ZonePaces, $WaitTime, $FailSleep )
+function GetBestPlanetAndZone( &$ZonePaces, $PreferLowZones, $WaitTime, $FailSleep )
 {
 	$Planets = SendGET( 'ITerritoryControlMinigameService/GetPlanets', 'active_only=1&language=english' );
 
@@ -673,6 +703,14 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime, $FailSleep )
 	}
 
 	$Planets = $Planets[ 'response' ][ 'planets' ];
+
+	usort( $Planets, function( $a, $b )
+	{
+		$a = isset( $a[ 'state' ][ 'boss_zone_position' ] ) ? 1000 : $a[ 'id' ];
+		$b = isset( $b[ 'state' ][ 'boss_zone_position' ] ) ? 1000 : $b[ 'id' ];
+
+		return $b - $a;
+	} );
 
 	foreach( $Planets as &$Planet )
 	{
@@ -698,7 +736,7 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime, $FailSleep )
 
 		do
 		{
-			$Zone = GetPlanetState( $Planet[ 'id' ], $ZonePaces, $WaitTime );
+			$Zone = GetPlanetState( $Planet[ 'id' ], $ZonePaces, $PreferLowZones, $WaitTime );
 		}
 		while( $Zone === null && sleep( $FailSleep ) === 0 );
 
@@ -760,6 +798,11 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime, $FailSleep )
 			if( $Planet[ 'high_zones' ] > 0 )
 			{
 				$Planet[ 'sort_key' ] += pow( 10, 4 ) * ( 99 - $Planet[ 'high_zones' ] );
+			}
+
+			if( $PreferLowZones )
+			{
+				$Planet[ 'sort_key' ] *= -1;
 			}
 		}
 	}
