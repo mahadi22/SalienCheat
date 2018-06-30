@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//073cc53
+//6a68f72
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -62,6 +62,7 @@ if( strlen( $Token ) !== 32 )
 
 // Pass env ACCOUNTID, get it from salien page source code called 'gAccountID'
 $AccountID = isset( $_SERVER[ 'ACCOUNTID' ] ) ? (int)$_SERVER[ 'ACCOUNTID' ] : 0;
+
 if( isset( $_SERVER[ 'IGNORE_UPDATES' ] ) && (bool)$_SERVER[ 'IGNORE_UPDATES' ] )
 {
 	$UpdateCheck = false;
@@ -176,18 +177,23 @@ do
 		}
 
 		$BossFailsAllowed = 10;
-		$NextHeal = microtime( true ) + 120;
+		$NextHeal = microtime( true ) + mt_rand( 120, 300 );
+
 		do
 		{
 			$UseHeal = 0;
+			$DamageToBoss = 1;
+			$DamageTaken = 0;
 
 			if( microtime( true ) >= $NextHeal )
 			{
 				$UseHeal = 1;
-				$NextHeal = microtime( true ) + 120;
+				$NextHeal = microtime( true ) + mt_rand( 120, 300 );
+
+				Msg( '{teal}@@ Using heal ability' );
 			}
 
-			$Data = SendPOST( 'ITerritoryControlMinigameService/ReportBossDamage', 'access_token=' . $Token . '&use_heal_ability=' . $UseHeal . '&damage_to_boss=' . rand( 40, 100 ) . '&damage_taken=' . rand( 20, 80 ) );
+			$Data = SendPOST( 'ITerritoryControlMinigameService/ReportBossDamage', 'access_token=' . $Token . '&use_heal_ability=' . $UseHeal . '&damage_to_boss=' . $DamageToBoss . '&damage_taken=' . $DamageTaken );
 
 			if( $Data[ 'eresult' ] != 1 && $BossFailsAllowed-- < 1 )
 			{
@@ -205,15 +211,40 @@ do
 				continue;
 			}
 
-			foreach( $Data[ 'response' ][ 'boss_status' ][ 'boss_players' ] as $Player )
+			usort( $Data[ 'response' ][ 'boss_status' ][ 'boss_players' ], function( $a, $b ) use ( $AccountID )
 			{
-				if( $AccountID > 0 && $Player[ 'accountid' ] != $AccountID )
+				if( $a[ 'accountid' ] == $AccountID )
 				{
-					continue;
+					return 1;
+				}
+				else if( $b[ 'accountid' ] == $AccountID )
+				{
+					return -1;
 				}
 
-				Msg( '{green}@@ Player ' . $Player[ 'accountid' ] . ' - HP: ' . $Player[ 'hp' ] . ' / ' . $Player[ 'max_hp' ] . ' - XP Earned: ' . $Player[ 'xp_earned' ] );
+				if( $b[ 'xp_earned' ] == $a[ 'xp_earned' ] )
+				{
+					return $b[ 'hp' ] - $a[ 'hp' ];
+				}
+
+				return $b[ 'xp_earned' ] - $a[ 'xp_earned' ];
+			} );
+
+			foreach( $Data[ 'response' ][ 'boss_status' ][ 'boss_players' ] as $Player )
+			{
+				Msg(
+					( $Player[ 'accountid' ] == $AccountID ? '{green}@@' : '  ' ) .
+					' Player %9d - HP: %6s / %6s - Score: %10s',
+					PHP_EOL,
+					[
+						$Player[ 'accountid' ],
+						$Player[ 'hp' ],
+						$Player[ 'max_hp' ],
+						number_format( $Player[ 'xp_earned' ] )
+					]
+				);
 			}
+
 			if( $Data[ 'response' ][ 'game_over' ] )
 			{
 				Msg( '{green}@@ Boss battle is over.' );
@@ -233,7 +264,8 @@ do
 			}
 			else
 			{
-				Msg( '{green}@@ Boss HP: ' . number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] ) . ' / ' .  number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] ) );
+				Msg( '@@ Boss HP: {green}' . number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] ) . '{normal} / {lightred}' .  number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] ) . '{normal} - Lasers: {yellow}' . $Data[ 'response' ][ 'num_laser_uses' ] . '{normal} - Team Heals: {green}' . $Data[ 'response' ][ 'num_team_heals' ] );
+				echo PHP_EOL;
 			}
 		}
 		while( sleep( 5 ) === 0 );
@@ -264,6 +296,7 @@ do
 		'{normal} - Captured: {yellow}' . number_format( empty( $Zone[ 'capture_progress' ] ) ? 0.0 : ( $Zone[ 'capture_progress' ] * 100 ), 2 ) . '%' .
 		'{normal} - Difficulty: {yellow}' . GetNameForDifficulty( $Zone )
 	);
+
 	$setTitle1 = "p:". $BestPlanetAndZone[ 'id' ] . "-z:" . $Zone[ 'zone_position' ];
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
