@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//0ada7e6
+//073cc53
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -176,9 +176,18 @@ do
 		}
 
 		$BossFailsAllowed = 10;
+		$NextHeal = microtime( true ) + 120;
 		do
 		{
-			$Data = SendPOST( 'ITerritoryControlMinigameService/ReportBossDamage', 'access_token=' . $Token . '&use_heal_ability=0&damage_to_boss=100&damage_taken=0' );
+			$UseHeal = 0;
+
+			if( microtime( true ) >= $NextHeal )
+			{
+				$UseHeal = 1;
+				$NextHeal = microtime( true ) + 120;
+			}
+
+			$Data = SendPOST( 'ITerritoryControlMinigameService/ReportBossDamage', 'access_token=' . $Token . '&use_heal_ability=' . $UseHeal . '&damage_to_boss=' . rand( 40, 100 ) . '&damage_taken=' . rand( 20, 80 ) );
 
 			if( $Data[ 'eresult' ] != 1 && $BossFailsAllowed-- < 1 )
 			{
