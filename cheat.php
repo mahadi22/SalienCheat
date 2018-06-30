@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//6a68f72
+//d545ce6
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -109,6 +109,8 @@ do
 
 	if( isset( $Data[ 'response' ][ 'score' ] ) )
 	{
+		$OldScore = $Data[ 'response' ][ 'score' ];
+		
 		//if( !isset( $Data[ 'response' ][ 'clan_info' ][ 'accountid' ] ) )
 		//{
 			//Msg( '{green}-- You are currently not representing any clan, so you are now part of xxxx' );
@@ -251,8 +253,6 @@ do
 
 				$BestPlanetAndZone = 0;
 				$LastKnownPlanet = 0;
-
-				print_r( $Data );
 
 				break;
 			}
