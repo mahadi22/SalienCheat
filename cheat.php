@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//b7e7944
+//4d64dee
 set_time_limit( 0 );
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
@@ -84,8 +84,9 @@ if( isset( $_SERVER[ 'DISABLE_COLORS' ] ) )
 	$DisableColors = (bool)$_SERVER[ 'DISABLE_COLORS' ];
 }
 
-$GameVersion = 1;
+$GameVersion = 2;
 $WaitTime = 110;
+$FailSleep = 3;
 $ZonePaces = [];
 $OldScore = 0;
 $LastKnownPlanet = 0;
@@ -122,7 +123,7 @@ do
 		//}
 	}
 }
-while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( 1 ) === 0 );
+while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( $FailSleep ) === 0 );
 
 do
 {
@@ -130,45 +131,103 @@ do
 	{
 		do
 		{
-			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
+			$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime, $FailSleep );
 		}
-		while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
+		while( !$BestPlanetAndZone && sleep( $FailSleep ) === 0 );
 	}
-	
+
 	echo PHP_EOL;
+
 	// Only get player info and leave current planet if it changed
 	if( $LastKnownPlanet !== $BestPlanetAndZone[ 'id' ] )
 	{
 		do
 		{
 			// Leave current game before trying to switch planets (it will report InvalidState otherwise)
-			$SteamThinksPlanet = LeaveCurrentGame( $Token, $BestPlanetAndZone[ 'id' ] );
-			
+			$SteamThinksPlanet = LeaveCurrentGame( $Token, $FailSleep, $BestPlanetAndZone[ 'id' ] );
+
 			if( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet )
 			{
 				SendPOST( 'ITerritoryControlMinigameService/JoinPlanet', 'id=' . $BestPlanetAndZone[ 'id' ] . '&access_token=' . $Token );
-				
-				$SteamThinksPlanet = LeaveCurrentGame( $Token );
+
+				$SteamThinksPlanet = LeaveCurrentGame( $Token, $FailSleep );
 			}
 		}
-		while( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet && sleep( 1 ) === 0 );
-	
+		while( $BestPlanetAndZone[ 'id' ] !== $SteamThinksPlanet && sleep( $FailSleep ) === 0 );
+
 		$LastKnownPlanet = $BestPlanetAndZone[ 'id' ];
 	}
-	
+
+	if( isset( $BestPlanetAndZone[ 'best_zone' ][ 'boss_active' ] ) && $BestPlanetAndZone[ 'best_zone' ][ 'boss_active' ] )
+	{
+		$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinBossZone', 'zone_position=' . $BestPlanetAndZone[ 'best_zone' ][ 'zone_position' ] . '&access_token=' . $Token );
+
+		if( $Zone[ 'eresult' ] != 1 )
+		{
+			Msg( '{lightred}!! Failed to join boss zone, rescanning and restarting...' );
+
+			$BestPlanetAndZone = 0;
+
+			sleep( $FailSleep );
+
+			continue;
+		}
+
+		$BossFailsAllowed = 10;
+		do
+		{
+			$Data = SendPOST( 'ITerritoryControlMinigameService/ReportBossDamage', 'access_token=' . $Token . '&use_heal_ability=0&damage_to_boss=1000&damage_taken=0' );
+
+			if( $Data[ 'eresult' ] != 1 && $BossFailsAllowed-- < 1 )
+			{
+				Msg( '{green}@@ Boss battle errored too much, restarting.' );
+				break;
+			}
+
+			if( empty( $Data[ 'response' ][ 'boss_status' ] ) )
+			{
+				Msg( '{green}@@ Waiting...' );
+				continue;
+			}
+
+			if( $Data[ 'response' ][ 'game_over' ] )
+			{
+				Msg( '{green}@@ Boss battle is over.' );
+				break;
+			}
+
+			if( $Data[ 'response' ][ 'waiting_for_players' ] )
+			{
+				Msg( '{green}@@ Waiting for players...' );
+				continue;
+			}
+			else
+			{
+				Msg( '{green}@@ Boss HP: ' . number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] ) . ' / ' .  number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] ) );
+			}
+		}
+		while( sleep( 5 ) === 0 );
+
+		continue;
+	}
+
 	$Zone = SendPOST( 'ITerritoryControlMinigameService/JoinZone', 'zone_position=' . $BestPlanetAndZone[ 'best_zone' ][ 'zone_position' ] . '&access_token=' . $Token );
 	$PlanetCheckTime = microtime( true );
-	
+
 	// Rescan planets if joining failed
 	if( empty( $Zone[ 'response' ][ 'zone_info' ] ) )
 	{
 		Msg( '{lightred}!! Failed to join a zone, rescanning and restarting...' );
+
 		$BestPlanetAndZone = 0;
+
+		sleep( $FailSleep );
+
 		continue;
 	}
-	
+
 	$Zone = $Zone[ 'response' ][ 'zone_info' ];
-	
+
 	Msg(
 		'++ Joined Zone {yellow}' . $Zone[ 'zone_position' ] .
 		'{normal} on Planet {green}' . $BestPlanetAndZone[ 'id' ] .
@@ -206,9 +265,9 @@ do
 
 	do
 	{
-		$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime );
+		$BestPlanetAndZone = GetBestPlanetAndZone( $ZonePaces, $WaitTime, $FailSleep );
 	}
-	while( !$BestPlanetAndZone && sleep( 1 ) === 0 );
+	while( !$BestPlanetAndZone && sleep( $FailSleep ) === 0 );
 
 	$LagAdjustedWaitTime -= microtime( true ) - $PlanetCheckTime;
 
@@ -517,7 +576,7 @@ function GetPlanetState( $Planet, &$ZonePaces, $WaitTime )
 	];
 }
 
-function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
+function GetBestPlanetAndZone( &$ZonePaces, $WaitTime, $FailSleep )
 {
 	$Planets = SendGET( 'ITerritoryControlMinigameService/GetPlanets', 'active_only=1&language=english' );
 
@@ -556,7 +615,7 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
 		{
 			$Zone = GetPlanetState( $Planet[ 'id' ], $ZonePaces, $WaitTime );
 		}
-		while( $Zone === null && sleep( 1 ) === 0 );
+		while( $Zone === null && sleep( $FailSleep ) === 0 );
 
 		if( $Zone === false )
 		{
@@ -638,7 +697,7 @@ function GetBestPlanetAndZone( &$ZonePaces, $WaitTime )
 	return $Planet;
 }
 
-function LeaveCurrentGame( $Token, $LeaveCurrentPlanet = 0 )
+function LeaveCurrentGame( $Token, $FailSleep, $LeaveCurrentPlanet = 0 )
 {
 	do
 	{
@@ -648,8 +707,13 @@ function LeaveCurrentGame( $Token, $LeaveCurrentPlanet = 0 )
 		{
 			SendPOST( 'IMiniGameService/LeaveGame', 'access_token=' . $Token . '&gameid=' . $Data[ 'response' ][ 'active_zone_game' ] );
 		}
+
+		if( isset( $Data[ 'response' ][ 'active_boss_game' ] ) )
+		{
+			SendPOST( 'IMiniGameService/LeaveGame', 'access_token=' . $Token . '&gameid=' . $Data[ 'response' ][ 'active_boss_game' ] );
+		}
 	}
-	while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( 1 ) === 0 );
+	while( !isset( $Data[ 'response' ][ 'score' ] ) && sleep( $FailSleep ) === 0 );
 
 	if( !isset( $Data[ 'response' ][ 'active_planet' ] ) )
 	{
@@ -780,14 +844,14 @@ function ExecuteRequest( $Method, $URL, $Data = [] )
 
 				Msg( '{lightred}-- EResult 10 means Steam is busy' );
 
-				sleep( 3 );
+				sleep( 5 );
 			}
 		}
 
 		$Data = json_decode( $Data, true );
 		$Data[ 'eresult' ] = $EResult;
 	}
-	while( !isset( $Data[ 'response' ] ) && sleep( 1 ) === 0 );
+	while( !isset( $Data[ 'response' ] ) && sleep( 2 ) === 0 );
 
 	return $Data;
 }
