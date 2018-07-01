@@ -475,7 +475,7 @@ do
 			);
 		}
 
-		if( $Data[ 'new_level' ] >= 21 )
+		if( $Data[ 'new_level' ] >= 0b11001 )
 		{
 			$RandomizeZone = 1;
 		}
