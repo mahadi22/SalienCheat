@@ -480,7 +480,7 @@ do
 			$RandomizeZone = 1;
 		}
 		$expT = number_format( GetNextLevelProgress( $Data ) * 100, 2 ) . '%';
-		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ." ". $Hours . 'h' . $Minutes . 'm';
+		$setTitle2 = "L:" . $Data[ 'new_level' ] . " " . $expT ;
 		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
 	}
