@@ -4,7 +4,7 @@
 ### First steps
 
 1. Join https://steamcommunity.com/groups/SteamDB (if you want to represent steamDB)
-2. Get your token from (Steam)[https://steamcommunity.com/saliengame/gettoken], if you take only the token, save as token0.txt, if you save the page, save as token0.json
+2. Get your token from [Steam page](https://steamcommunity.com/saliengame/gettoken) , if you take only the token, save as token0.txt, if you save the page, save as token0.json
 3. Follow install instruction
 
 ## PHP
