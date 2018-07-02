@@ -1,7 +1,7 @@
 ### This repo are fork from [SteamDB Repo](https://github.com/SteamDatabase/SalienCheat)
 
 ## How to use this
-## First steps
+### First steps
 
 1. Join https://steamcommunity.com/groups/SteamDB (if you want to represent steamDB)
 2. Follow install instruction
@@ -12,18 +12,26 @@
 ### Installing
 1. [Download this script](https://github.com/mahadi22/SalienCheat/archive/master.zip)
 2. Extract it into a new folder
-3. Click `cheat.bat` and follow instructions
+3. Run `setup.bat` and follow instructions
 
 ### How to run
 1. open simplerun.bat
 2. input your token string (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) or your token file name complete with extension (token0.txt)
 
-Another way to run, good for multiple account              
+Another way to run from cli/cmd, mainly for multiple account              
 ```
 - php cheat.php yourtokenstring             
 - php cheat.php tokenfile.txt                  
-- php cheat.php   (you can input your tokenfile or token string inside)
+- php cheat.php token.json
+- php cheat.php yourtokenstring accountid
+- php cheat.php   (input your tokenfile or token string in the start)
 ```
+
+### Updating
+1. Close all salien cheat currently running
+2. Open [`cheat.php`](https://github.com/mahadi22/SalienCheat/raw/master/cheat.php)
+3. Save as cheat.php and replace cheat.php file in the folder
+
 
 ![OnAction](https://i.imgur.com/6C9bwVC.png)
 
@@ -34,11 +42,6 @@ Another way to run, good for multiple account
 1. Extract the contents of this script to the Downloads folder
 2. Launch Terminal and run the script: `php downloads/cheat.php`
 
-You can also provide token directly in CLI, to ease running multiple accounts:
-```
-php cheat.php token1
-php cheat.php token2
-```
 
 ### Linux
 
