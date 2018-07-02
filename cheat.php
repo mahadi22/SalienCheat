@@ -1,11 +1,19 @@
 #!/usr/bin/env php
 <?php
-//66425b6
+//8b8245d
 Msg( "{background-blue}Welcome to SalienCheat for Everyone" );
 
 set_time_limit( 0 );
 error_reporting( -1 );
 ini_set( 'display_errors', '1' );
+
+if( !function_exists( 'random_int' ) )
+{
+	function random_int( $min, $max )
+	{
+		return mt_rand( $min, $max );
+	}
+}
 
 if( !file_exists( __DIR__ . '/cacert.pem' ) )
 {
@@ -13,14 +21,22 @@ if( !file_exists( __DIR__ . '/cacert.pem' ) )
 	exit( 1 );
 }
 
-$setTitle1 = $setTitle2  = $setTitle3  = "";
+$setTitle0 = $setTitle1 = $setTitle2  = $setTitle3  = "";$cek32 = 0;
 // Pass env ACCOUNTID, get it from salien page source code called 'gAccountID'
 $AccountID = isset( $_SERVER[ 'ACCOUNTID' ] ) ? (int)$_SERVER[ 'ACCOUNTID' ] : 0;
 
 if( $argc === 2 )
 {
 	$fileLoc = $argv[ 1 ];
-	if(strpos($fileLoc, '.txt') !== false) {
+	if(strpos($fileLoc, '.json') !== false) {
+		$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
+		$setTitle0 = "SALIEN-" . $fileLoc;
+		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+		cli_set_process_title($setTitlex);
+		goto parsetoken0;
+	}
+	else if(strpos($fileLoc, '.txt') !== false) {
+		$cek32 = 1;
 		$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
 		$setTitle0 = "SALIEN-" . $fileLoc;
 		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
@@ -31,6 +47,17 @@ if( $argc === 2 )
 		$setTitle0 = "SALIEN-" . $Token;
 		$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 		cli_set_process_title($setTitlex);
+	}
+}
+else if( $argc === 3 )
+{
+	$Token = $argv[ 1 ];
+	$setTitle0 = "SALIEN-" . $fileLoc;
+	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
+	cli_set_process_title($setTitlex);
+	if( $argc > 2 )
+	{
+		$AccountID = $argv[ 2 ];
 	}
 }
 else if( isset( $_SERVER[ 'TOKEN' ] ) )
@@ -47,6 +74,7 @@ else
 	$setTitle0 = "SALIEN-" . $fileLoc;
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
+	parsetoken0:
 	$ParsedToken = json_decode( $Token, true );
 
 	if( is_string( $ParsedToken ) )
@@ -68,11 +96,13 @@ else
 
 	unset( $ParsedToken );
 }
-
-if( strlen( $Token ) !== 32 )
+if ( $cek32 == 1 )
 {
-	Msg( '{lightred} Failed to find your token. Verify your token correct/token file exist.' );
-	exit( 1 );
+	if( strlen( $Token ) !== 32 )
+		{
+			Msg( '{lightred} Failed to find your token. Verify your token correct/token file exist.' );
+			exit( 1 );
+		}
 }
 
 $LocalScriptHash = sha1( trim( file_get_contents( __FILE__ ) ) );
@@ -147,7 +177,7 @@ do
 		// By giving errors like time not synced or failed to join.
 		// Everyone at level 16 or above should be able to easily reach their Rank 6 badge without a problem with bosses
 		// So please don't change this and let's get this mini game over with
-		if( $Data[ 'response' ][ 'level' ] >= 0b11001 )
+		if( $Data[ 'response' ][ 'level' ] >= 0b11010 )
 		{
 			$RandomizeZone = 1;
 
@@ -212,19 +242,26 @@ do
 		$NextHeal = PHP_INT_MAX;
 		$WaitingForPlayers = true;
 		$MyScoreInBoss = 0;
+		$BossEstimate =
+		[
+			'PrevHP' => 0,
+			'PrevXP' => 0,
+			'DeltHP' => [],
+			'DeltXP' => []
+		];
 
 		do
 		{
+			$Time = microtime( true );
 			$UseHeal = 0;
-			$DamageToBoss = $WaitingForPlayers ? 0 : 1;
+			// Do more damage in hopes of getting a harder boss next time
+			$DamageToBoss = $WaitingForPlayers ? 0 : random_int( 1, 40 );
 			$DamageTaken = 0;
 
-			if( microtime( true ) >= $NextHeal )
+			if( $Time >= $NextHeal )
 			{
 				$UseHeal = 1;
-				$NextHeal = microtime( true ) + 120;
-
-				Msg( '{teal}@@ Using heal ability' );
+				$NextHeal = $Time + 120;
 			}
 
 			$Data = SendPOST( 'ITerritoryControlMinigameService/ReportBossDamage', 'access_token=' . $Token . '&use_heal_ability=' . $UseHeal . '&damage_to_boss=' . $DamageToBoss . '&damage_taken=' . $DamageTaken );
@@ -233,9 +270,6 @@ do
 			{
 				Msg( '{green}@@ Got invalid state, restarting...' );
 
-				$BestPlanetAndZone = 0;
-				$LastKnownPlanet = 0;
-
 				break;
 			}
 
@@ -243,10 +277,13 @@ do
 			{
 				Msg( '{green}@@ Boss battle errored too much, restarting...' );
 
-				$BestPlanetAndZone = 0;
-				$LastKnownPlanet = 0;
-
 				break;
+			}
+
+			if( empty( $Data[ 'response' ][ 'boss_status' ] ) )
+			{
+				Msg( '{green}@@ Waiting...' );
+				continue;
 			}
 
 			if( $Data[ 'response' ][ 'waiting_for_players' ] )
@@ -258,13 +295,7 @@ do
 			else if( $WaitingForPlayers )
 			{
 				$WaitingForPlayers = false;
-				$NextHeal = microtime( true ) + mt_rand( 0, 120 );
-			}
-
-			if( empty( $Data[ 'response' ][ 'boss_status' ] ) )
-			{
-				Msg( '{green}@@ Waiting...' );
-				continue;
+				$NextHeal = $Time + random_int( 0, 120 );
 			}
 
 			// Strip names down to basic ASCII.
@@ -311,16 +342,6 @@ do
 				);
 			}
 
-			if( $Data[ 'response' ][ 'game_over' ] )
-			{
-				Msg( '{green}@@ Boss battle is over.' );
-
-				$BestPlanetAndZone = 0;
-				$LastKnownPlanet = 0;
-
-				break;
-			}
-
 			if( $MyPlayer !== null )
 			{
 				$MyScoreInBoss = $MyPlayer[ 'score_on_join' ] + $MyPlayer[ 'xp_earned' ];
@@ -328,11 +349,41 @@ do
 				Msg( '@@ Started XP: ' . number_format( $MyPlayer[ 'score_on_join' ] ) . ' {teal}(L' . $MyPlayer[ 'level_on_join' ] . '){normal} - Current XP: {yellow}' . number_format( $MyScoreInBoss ) . ' ' . ( $MyPlayer[ 'level_on_join' ] != $MyPlayer[ 'new_level' ] ? '{green}' : '{teal}' ) . '(L' . $MyPlayer[ 'new_level' ] . ')' );
 			}
 
+			if( $Data[ 'response' ][ 'game_over' ] )
+			{
+				Msg( '{green}@@ Boss battle is over.' );
+
+				break;
+			}
+
+			if( $BossEstimate[ 'PrevXP' ] > 0 )
+			{
+				$BossEstimate[ 'DeltHP' ][] = abs( $BossEstimate[ 'PrevHP' ] - $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] );
+				$BossEstimate[ 'DeltXP' ][] = ( $MyPlayer !== null ? abs( $BossEstimate[ 'PrevXP' ] - $MyPlayer[ 'xp_earned' ] ) : 1 );
+
+				$EstXPRate = ( $MyPlayer !== null ? ( array_sum( $BossEstimate[ 'DeltXP' ] ) / count( $BossEstimate[ 'DeltXP' ] ) ) : 2500 );
+				$EstBossDPT = ( array_sum( $BossEstimate[ 'DeltHP' ] ) / count( $BossEstimate[ 'DeltHP' ] ) );
+				$EstXPTotal = ( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] / $EstBossDPT ) * $EstXPRate;
+
+				Msg( '@@ Estimated Final XP: {lightred}' . number_format( $EstXPTotal ) . "{normal} ({yellow}+" . number_format( $EstXPRate ) . "{normal}/tick excl. bonuses) - Damage per Second: {green}" . number_format( $EstBossDPT / 5 ) );
+			}
+
+			$BossEstimate[ 'PrevHP' ] = $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ];
+			$BossEstimate[ 'PrevXP' ] = ( $MyPlayer !== null ? $MyPlayer[ 'xp_earned' ] : 0 );
+
 			Msg( '@@ Boss HP: {green}' . number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_hp' ] ) . '{normal} / {lightred}' .  number_format( $Data[ 'response' ][ 'boss_status' ][ 'boss_max_hp' ] ) . '{normal} - Lasers: {yellow}' . $Data[ 'response' ][ 'num_laser_uses' ] . '{normal} - Team Heals: {green}' . $Data[ 'response' ][ 'num_team_heals' ] );
+
+			Msg( '{normal}@@ Damage sent: {green}' . $DamageToBoss . '{normal} - ' . ( $UseHeal ? '{green}Used heal ability!' : 'Next heal in {green}' . round( $NextHeal - $Time ) . '{normal} seconds' ) );
 
 			echo PHP_EOL;
 		}
 		while( BossSleep( $c ) );
+
+		// Boss battle is over, reset state and scan again
+		$BestPlanetAndZone = 0;
+		$LastKnownPlanet = 0;
+
+		unset( $BossEstimate );
 
 		if( $MyScoreInBoss > 0 )
 		{
@@ -475,7 +526,7 @@ do
 			);
 		}
 
-		if( $Data[ 'new_level' ] >= 0b11001 )
+		if( $Data[ 'new_level' ] >= 0b11010 )
 		{
 			$RandomizeZone = 1;
 		}
@@ -606,6 +657,7 @@ function GetPlanetState( $Planet, $RandomizeZone, $WaitTime )
 	$MediumZones = 0;
 	$LowZones = 0;
 	$BossZones = [];
+	$HalfZones = [];
 
 	foreach( $Zones as &$Zone )
 	{
@@ -628,6 +680,12 @@ function GetPlanetState( $Planet, $RandomizeZone, $WaitTime )
 		if( $Zone[ 'type' ] == 4 && $Zone[ 'boss_active' ] )
 		{
 			$BossZones[] = $Zone;
+		}
+		// It appears that bosses like to spawn when a random zone gets over 50% capture progress
+		// So we will target fresh zones to bring them up to speed
+		else if( $Zone[ 'capture_progress' ] < 0.45 )
+		{
+			$HalfZones[] = $Zone;
 		}
 
 		$Cutoff = ( $Zone[ 'difficulty' ] < 2 && !$RandomizeZone ) ? 0.90 : 0.99;
@@ -654,6 +712,7 @@ function GetPlanetState( $Planet, $RandomizeZone, $WaitTime )
 	if( !empty( $BossZones ) )
 	{
 		$CleanZones = $BossZones;
+		goto bossLabel;
 	}
 	else if( count( $CleanZones ) < 2 )
 	{
@@ -662,6 +721,11 @@ function GetPlanetState( $Planet, $RandomizeZone, $WaitTime )
 
 	if( $RandomizeZone )
 	{
+		if( count( $HalfZones ) > 3 )
+		{
+			$CleanZones = $HalfZones;
+		}
+
 		shuffle( $CleanZones );
 	}
 	else
@@ -682,6 +746,7 @@ function GetPlanetState( $Planet, $RandomizeZone, $WaitTime )
 		} );
 	}
 
+bossLabel:
 	return [
 		'high_zones' => $HighZones,
 		'medium_zones' => $MediumZones,
