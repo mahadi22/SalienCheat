@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-//38d1301
+//4415d1b
 Msg( "{background-blue}Welcome to SalienCheat for Everyone" );
 
 set_time_limit( 0 );
@@ -68,6 +68,7 @@ else if( isset( $_SERVER[ 'TOKEN' ] ) )
 else
 {
 	// otherwise, read it from disk
+	$cek32 = 1;
 	msg ("Enter your token files (ex; token0.txt): ");
 	$fileLoc = fgets(STDIN);
 	$Token = trim(file_get_contents('./'.trim($fileLoc), FILE_USE_INCLUDE_PATH));
@@ -96,6 +97,7 @@ else
 
 	unset( $ParsedToken );
 }
+
 if ( $cek32 == 1 )
 {
 	if( strlen( $Token ) !== 32 )
@@ -255,8 +257,7 @@ do
 		{
 			$Time = microtime( true );
 			$UseHeal = 0;
-			// Do more damage in hopes of getting a harder boss next time
-			$DamageToBoss = $WaitingForPlayers ? 0 : random_int( 30, 150 );
+			$DamageToBoss = $WaitingForPlayers ? 0 : 1;
 			$DamageTaken = 0;
 
 			if( $Time >= $NextHeal )
@@ -381,7 +382,7 @@ do
 
 				// Display Estimated XP and DPS
 				Msg( '@@ Estimated Final XP: {lightred}' . number_format( $EstXPTotal ) . "{normal} ({yellow}+" . number_format( $EstXPRate ) . "{normal}/tick excl. bonuses) - Damage per Second: {green}" . number_format( $EstBossDPT / 5 ) );
-
+				
 				// Display Estimated Time Remaining
 				Msg( '@@ Estimated Time Remaining: {teal}' . gmdate( 'H:i:s', $EstTickRemain * 5 ) );
 
@@ -866,30 +867,33 @@ function GetBestPlanetAndZone( $HasReachedMaxLevel, $WaitTime, $FailSleep )
 				return $Planet;
 			}
 
-			if( $Planet[ 'low_zones' ] > 0 )
-			{
-				$Planet[ 'sort_key' ] += 99 - $Planet[ 'low_zones' ];
-			}
-
 			if( $Planet[ 'medium_zones' ] > 0 )
 			{
 				$Planet[ 'sort_key' ] += pow( 10, 2 ) * ( 99 - $Planet[ 'medium_zones' ] );
 			}
 
-			if( $Planet[ 'high_zones' ] > 0 )
-			{
-				$Planet[ 'sort_key' ] += pow( 10, 4 ) * ( 99 - $Planet[ 'high_zones' ] );
-			}
-
 			if( $HasReachedMaxLevel )
 			{
-				if( $Planet[ 'sort_key' ] > 0 )
+				if( $Planet[ 'low_zones' ] > 0 )
 				{
-					$Planet[ 'sort_key' ] *= -1;
+					$Planet[ 'sort_key' ] += pow( 10, 4 ) * ( 99 - $Planet[ 'low_zones' ] );
 				}
-				else
+
+				if( $Planet[ 'high_zones' ] > 0 )
 				{
-					$Planet[ 'sort_key' ] = -pow( 10, 6 );
+					$Planet[ 'sort_key' ] += 99 - $Planet[ 'high_zones' ];
+				}
+			}
+			else
+			{
+				if( $Planet[ 'low_zones' ] > 0 )
+				{
+					$Planet[ 'sort_key' ] += 99 - $Planet[ 'low_zones' ];
+				}
+
+				if( $Planet[ 'high_zones' ] > 0 )
+				{
+					$Planet[ 'sort_key' ] += pow( 10, 4 ) * ( 99 - $Planet[ 'high_zones' ] );
 				}
 			}
 		}
