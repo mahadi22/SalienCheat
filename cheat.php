@@ -52,7 +52,7 @@ if( $argc === 2 )
 else if( $argc === 3 )
 {
 	$Token = $argv[ 1 ];
-	$setTitle0 = "SALIEN-" . $fileLoc;
+	$setTitle0 = "SALIEN-" . $Token;
 	$setTitlex = $setTitle0 . "-" . $setTitle1 . "-" . $setTitle2 . $setTitle3;
 	cli_set_process_title($setTitlex);
 	if( $argc > 2 )
