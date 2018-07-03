@@ -15,4 +15,3 @@ echo Installing are complete, run simplerun.bat to start the script
 echo :
 echo     This will close in 3sec
 TIMEOUT /T 3 /NOBREAK > nul
-pause
