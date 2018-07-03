@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-if not exist php\php.exe (
-	echo PHP wasn't detected; we'll download and install it for you.
+if not exist php.exe (
+	echo PHP wasn't detected; we'll extract it for you.
 	PowerShell -ExecutionPolicy Unrestricted -File "downloadphp.ps1"
 )
 
