@@ -8,7 +8,7 @@ if($PSVersiontable.PSVersion.Major -lt 5)
     }
 }
 else {
-Expand-Archive -LiteralPath php.zip -DestinationPath .\
+Expand-Archive -LiteralPath php.zip -DestinationPath .\ -Force
 }
 Copy-Item -Path .\php.ini-production -Destination .\php.ini
 ((Get-Content .\php.ini)) -Replace ";extension=curl", ("extension=" + (Get-Item -Path ".\") + "\ext\php_curl.dll") | Set-Content .\php.ini
