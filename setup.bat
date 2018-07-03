@@ -11,7 +11,17 @@ if not exist token0.txt (
 	echo !token! > token0.txt
 )
 
+echo :
+if exist php.exe goto success
+if not exist php.exe goto failed
+:success
 echo Installing are complete, run simplerun.bat to start the script
 echo :
-echo     This will close in 3sec
-TIMEOUT /T 3 /NOBREAK > nul
+echo     This will close in 5sec
+TIMEOUT /T 5 /NOBREAK > nul
+exit
+:failed
+echo Extract failed, please extract php.zip manually to this folder.
+echo :
+echo     This will close in 10sec
+TIMEOUT /T 10 /NOBREAK > nul
